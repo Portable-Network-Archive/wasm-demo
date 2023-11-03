@@ -1,0 +1,45 @@
+.main {
+  margin: auto;
+  padding: 1rem;
+  widows: 800px;
+  max-width: calc(100% - 8rem);
+  color: white;
+  font-size: 20px;
+  line-height: 1.6;
+}
+.h1 {
+  font-size: 4rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  margin-bottom: 1em;
+}
+.ul {
+  display: inline-block;
+  list-style: none;
+  padding: 0;
+  width: calc(100% - 1rem);
+}
+.li {
+  display: flex;
+  border: 1px solid #ccc;
+  margin: 5px auto;
+  padding: 10px;
+  border-radius: 5px;
+  text-align: initial;
+  width: calc(100% - 2rem);
+}
+.li .file-name {
+  text-align: left;
+  flex: 1;
+}
+.li .file-size {
+  text-align: right;
+  vertical-align: bottom;
+}
+.link-card-grid {
+  display: grid;
+  grid-template-columns: auto-fit, minmax(24ch, 1fr);
+  gap: 2rem;
+  padding: 0;
+}

@@ -1,0 +1,23 @@
+input[type="button"].button {
+  background-color: rgb(var(--accent));
+  color: whitesmoke;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+  display: block;
+  margin: 0 auto;
+  text-align: center;
+  width: 150px;
+}
+input[type="button"]:disabled.button {
+  background-color: rgb(var(--accent-dark));
+  color: rgb(var(--accent));
+}
+input[type="button"]:hover:not(:disabled).button {
+  background-color: rgb(var(--accent-light));
+  color: rgb(var(--accent));
+}

@@ -1,0 +1,23 @@
+.return-link {
+  position: absolute;
+  top: 1.5rem;
+  left: 2rem;
+  color: white;
+  text-decoration: none;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  transition:
+    color 0.3s ease,
+    transform 0.2s ease;
+}
+
+.return-link span {
+  font-size: 2rem;
+}
+
+.return-link:hover {
+  color: rgb(var(--accent));
+  transform: translateX(-5px);
+  padding-right: 5px;
+}

@@ -1,0 +1,18 @@
+.drop-area {
+  max-width: 100%;
+  min-height: 200px;
+  border: 2px dashed whitesmoke;
+  border-radius: 1rem;
+  text-align: center;
+  margin: 50px auto;
+}
+.drop-area:hover {
+  background-color: #252738;
+  border: 2px dashed rgb(var(--accent));
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+.drop-area input {
+  visibility: hidden;
+}
