@@ -9,7 +9,7 @@ export default function Home() {
         Welcome to <span className={styles["text-gradient"]}>WASM PNA</span>
       </h1>
       <p className={styles["instructions"]}>
-        Try <code>PNA WASM</code> which works entirely in your browser, without
+        Try <code>WASM PNA</code> which works entirely in your browser, without
         uploading files online.
         <br />
         <strong>Challenge:</strong> &quot;Create&quot; PNA in your browser.
