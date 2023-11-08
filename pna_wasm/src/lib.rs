@@ -17,9 +17,8 @@ use wasm_bindgen::prelude::*;
 //     alert(&format!("Hello {}", name));
 // }
 
-#[wasm_bindgen]
 #[derive(Debug, PartialEq, Eq)]
-pub struct PnaEntry {
+struct PnaEntry {
     name: String,
     data: Vec<u8>,
 }
