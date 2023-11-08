@@ -21,8 +21,7 @@ export default dynamic(
 function Create(pna: typeof import("pna")) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [archive, setArchive] = useState<Uint8Array | null>(null);
-  const [entries, setEntries] = useState<File[]>([]);
-  const [entriesElements, setEntriesElements] = useState<React.ReactNode[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
   function preventDefaults<E, C, T>(event: React.BaseSyntheticEvent<E, C, T>) {
     event.preventDefault();
     event.stopPropagation();
@@ -32,16 +31,9 @@ function Create(pna: typeof import("pna")) {
     const files = event.dataTransfer.files;
     addItems(files);
   }
-  function addItems(files: FileList) {
-    let items = Array.from(files);
-    setEntries([...entries, ...items]);
-    let elements = items.map((file) => (
-      <li key={file.name} className={styles["li"]}>
-        <span className={styles["file-name"]}>{file.name}</span>
-        <span className={styles["file-size"]}>{file.size} B</span>
-      </li>
-    ));
-    setEntriesElements([...entriesElements, ...elements]);
+  function addItems(fileList: FileList) {
+    let items = Array.from(fileList);
+    setFiles([...files, ...items]);
   }
 
   return (
@@ -58,12 +50,17 @@ function Create(pna: typeof import("pna")) {
         }}
       >
         <ul className={styles["ul"]}>
-          {entriesElements.length === 0 ? (
+          {files.length === 0 ? (
             <li>
               <label htmlFor="file">Drop your files here!</label>
             </li>
           ) : (
-            entriesElements
+            files.map((file) => (
+              <li key={file.name} className={styles["li"]}>
+                <span className={styles["file-name"]}>{file.name}</span>
+                <span className={styles["file-size"]}>{file.size} B</span>
+              </li>
+            ))
           )}
         </ul>
         <input
@@ -79,10 +76,10 @@ function Create(pna: typeof import("pna")) {
       </DropArea>
       <Button
         title="Create"
-        disabled={entries.length === 0}
+        disabled={files.length === 0}
         onClick={async () => {
           const objects = await Promise.all(
-            entries.map(async (f) => {
+            files.map(async (f) => {
               const data = new Uint8Array(await f.arrayBuffer());
               return { name: f.name, data: data };
             }),
