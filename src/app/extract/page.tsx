@@ -6,6 +6,7 @@ import DropArea from "@/components/DripArea";
 import React, { useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Card from "@/components/Card";
+import bytes from "bytes";
 
 export default dynamic(
   async () => {
@@ -92,7 +93,7 @@ function Extract(pna: typeof import("pna")) {
                 href={URL.createObjectURL(new Blob([data]))}
                 title="Download"
                 rightIcon={<span>&darr;</span>}
-                body={path + " : " + data.length + "bytes"}
+                body={path + " : " + bytes(data.length)}
                 download={path}
               />
             );
