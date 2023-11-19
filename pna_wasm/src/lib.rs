@@ -112,6 +112,33 @@ impl Entry {
         let data = js_sys::Uint8Array::new(&array).to_vec();
         Self::from(&name, &data).map_err(|_| JsValue::UNDEFINED)
     }
+
+    pub fn name(&self) -> String {
+        self.0.header().path().to_string()
+    }
+
+    fn into_vec(self) -> io::Result<Vec<u8>> {
+        let mut reader = self.0.into_reader(libpna::ReadOption::builder().build())?;
+        let mut data = Vec::new();
+        reader.read_to_end(&mut data)?;
+        Ok(data)
+    }
+
+    pub async fn extract(self) -> Result<js_sys::Uint8Array, JsValue> {
+        let vec = self.into_vec().map_err(|_| JsValue::UNDEFINED)?;
+        Ok(js_sys::Uint8Array::from(vec.as_slice()))
+    }
+}
+
+#[wasm_bindgen]
+#[derive(Debug, PartialEq, Eq)]
+pub struct Entries(Vec<Entry>);
+
+#[wasm_bindgen]
+impl Entries {
+    pub fn array(self) -> Vec<Entry> {
+        self.0
+    }
 }
 
 #[wasm_bindgen]
@@ -127,6 +154,25 @@ impl Archive {
             archive.add_entry(pna_entry.0).unwrap();
         }
         Self(archive.finalize().unwrap())
+    }
+
+    pub async fn from(f: web_sys::Blob) -> Self {
+        let array = JsFuture::from(f.array_buffer()).await.unwrap();
+        let data = js_sys::Uint8Array::new(&array);
+        Self(data.to_vec())
+    }
+
+    fn _entries(&self) -> io::Result<Entries> {
+        let mut archive = libpna::Archive::read_header(self.0.as_slice())?;
+        let entries = archive
+            .entries()
+            .map(|it| it.map(Entry))
+            .collect::<io::Result<Vec<_>>>()?;
+        Ok(Entries(entries))
+    }
+
+    pub async fn entries(&self) -> Result<Entries, JsValue> {
+        self._entries().map_err(|_| JsValue::UNDEFINED)
     }
 
     pub fn to_u8array(&self) -> js_sys::Uint8Array {
