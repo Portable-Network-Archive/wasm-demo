@@ -5,6 +5,7 @@ use std::{
     str::FromStr,
 };
 use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::JsFuture;
 
 // #[wasm_bindgen]
 // extern "C" {
@@ -86,6 +87,51 @@ fn _extract(archive: &[u8]) -> io::Result<Vec<PnaEntry>> {
             Ok(PnaEntry { name, data })
         })
         .collect::<Result<_, _>>()
+}
+
+#[wasm_bindgen]
+#[derive(Debug, PartialEq, Eq)]
+pub struct Entry(libpna::RegularEntry);
+
+#[wasm_bindgen]
+impl Entry {
+    fn from(name: &str, data: &[u8]) -> io::Result<Self> {
+        let mut entry = libpna::EntryBuilder::new_file(
+            libpna::EntryName::from_lossy(name),
+            libpna::WriteOption::builder()
+                .compression(libpna::Compression::ZStandard)
+                .build(),
+        )?;
+        entry.write_all(data)?;
+        Ok(Self(entry.build()?))
+    }
+
+    pub async fn new(f: web_sys::File) -> Result<Entry, JsValue> {
+        let name = f.name();
+        let array = JsFuture::from(f.array_buffer()).await?;
+        let data = js_sys::Uint8Array::new(&array).to_vec();
+        Self::from(&name, &data).map_err(|_| JsValue::UNDEFINED)
+    }
+}
+
+#[wasm_bindgen]
+#[derive(Debug, PartialEq, Eq)]
+pub struct Archive(Vec<u8>);
+
+#[wasm_bindgen]
+impl Archive {
+    pub fn create(entries: Vec<Entry>) -> Self {
+        let vec = Vec::new();
+        let mut archive = libpna::Archive::write_header(vec).unwrap();
+        for pna_entry in entries {
+            archive.add_entry(pna_entry.0).unwrap();
+        }
+        Self(archive.finalize().unwrap())
+    }
+
+    pub fn to_u8array(&self) -> js_sys::Uint8Array {
+        js_sys::Uint8Array::from(self.0.as_slice())
+    }
 }
 
 #[cfg(test)]

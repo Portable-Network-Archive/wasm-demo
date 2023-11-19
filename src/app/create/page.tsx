@@ -79,14 +79,10 @@ function Create(pna: typeof import("pna")) {
         disabled={files.length === 0}
         onClick={async () => {
           const objects = await Promise.all(
-            files.map(async (f) => {
-              const data = new Uint8Array(await f.arrayBuffer());
-              return { name: f.name, data: data };
-            }),
+            files.map(async (f) => pna.Entry.new(f)),
           );
-          const entry_map = new Map(objects.map((i) => [i.name, i.data]));
-          const archive_binary = pna.create(entry_map);
-          setArchive(archive_binary);
+          const a = pna.Archive.create(objects);
+          setArchive(a.to_u8array());
         }}
       />
       {archive && (
