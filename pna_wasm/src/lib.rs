@@ -61,7 +61,7 @@ fn _create(entries: &[PnaEntry]) -> io::Result<Vec<u8>> {
     for pna_entry in entries {
         archive.add_entry({
             let mut entry = libpna::EntryBuilder::new_file(
-                libpna::EntryName::from_str_lossy(&pna_entry.name),
+                libpna::EntryName::from_lossy(&pna_entry.name),
                 libpna::WriteOption::builder()
                     .compression(libpna::Compression::ZStandard)
                     .build(),
