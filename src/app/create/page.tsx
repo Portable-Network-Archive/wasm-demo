@@ -6,6 +6,7 @@ import React, { useRef, useState } from "react";
 import DropArea from "@/components/DripArea";
 import dynamic from "next/dynamic";
 import Card from "@/components/Card";
+import bytes from "bytes";
 
 export default dynamic(
   async () => {
@@ -58,7 +59,7 @@ function Create(pna: typeof import("pna")) {
             files.map((file) => (
               <li key={file.name} className={styles["li"]}>
                 <span className={styles["file-name"]}>{file.name}</span>
-                <span className={styles["file-size"]}>{file.size} B</span>
+                <span className={styles["file-size"]}>{bytes(file.size)}</span>
               </li>
             ))
           )}
@@ -92,7 +93,7 @@ function Create(pna: typeof import("pna")) {
               href={URL.createObjectURL(new Blob([archive]))}
               title="Download"
               rightIcon={<span>&darr;</span>}
-              body={"archive.pna" + " : " + archive.length + "bytes"}
+              body={"archive.pna" + " : " + bytes(archive.length)}
               download="archive.pna"
             />
           </ul>
