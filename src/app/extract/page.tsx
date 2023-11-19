@@ -81,12 +81,11 @@ function Extract(pna: typeof import("pna")) {
             return;
           }
           let entries = new Array<React.ReactNode>();
-          let data = await a.arrayBuffer();
-          let u8array = new Uint8Array(data);
-          let result = pna.extract(u8array);
-          for (var i of result.entries()) {
-            let path = i[0];
-            let data = i[1];
+          let archive = await pna.Archive.from(a);
+          let result = (await archive.entries()).array();
+          for (var entry of result) {
+            let path = entry.name();
+            let data = await entry.extract();
             let btn = (
               <Card
                 key={path}
