@@ -17,4 +17,4 @@ npm install
 npm run build
 ```
 
-your feedback and contributions are welcome!
+Your feedback and contributions are welcome!
