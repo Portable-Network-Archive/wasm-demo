@@ -22,7 +22,7 @@ export default dynamic(
 function Extract(pna: typeof import("pna")) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [archives, setArchives] = useState<File[]>([]);
-  const [entriesElements, setEntriesElements] = useState<React.ReactNode[]>([]);
+  const [entries, setEntries] = useState<File[]>([]);
   function preventDefaults<E, C, T>(event: React.BaseSyntheticEvent<E, C, T>) {
     event.preventDefault();
     event.stopPropagation();
@@ -81,30 +81,32 @@ function Extract(pna: typeof import("pna")) {
           if (a === undefined) {
             return;
           }
-          let entries = new Array<React.ReactNode>();
           let archive = await pna.Archive.from(a);
-          let result = (await archive.entries()).array();
-          for (var entry of result) {
-            let path = entry.name();
-            let data = await entry.extract();
-            let btn = (
-              <Card
-                key={path}
-                href={URL.createObjectURL(new Blob([data]))}
-                title="Download"
-                rightIcon={<span>&darr;</span>}
-                body={path + " : " + bytes(data.length)}
-                download={path}
-              />
-            );
-            entries.push(btn);
-          }
-          setEntriesElements(entries);
+          let result = await Promise.all(
+            (await archive.entries()).array().map(async (entry) => {
+              let path = entry.name();
+              let data = await entry.extract();
+              return new File([data], path);
+            }),
+          );
+          setEntries(result);
         }}
       />
       <div>
         <ul role="list" className={styles["link-card-grid"]}>
-          {entriesElements}
+          {entries.map((entry) => {
+            let path = entry.name;
+            return (
+              <Card
+                key={path}
+                href={URL.createObjectURL(entry)}
+                title="Download"
+                rightIcon={<span>&darr;</span>}
+                body={path + " : " + bytes(entry.size)}
+                download={path}
+              />
+            );
+          })}
         </ul>
       </div>
     </main>
