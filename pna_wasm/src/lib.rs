@@ -33,6 +33,7 @@ impl Entry {
     }
 
     pub async fn new(f: web_sys::File) -> Result<Entry, JsValue> {
+        utils::set_panic_hook();
         let name = f.name();
         let array = JsFuture::from(f.array_buffer()).await?;
         let data = js_sys::Uint8Array::new(&array).to_vec();
@@ -51,6 +52,7 @@ impl Entry {
     }
 
     pub async fn extract(self) -> Result<js_sys::Uint8Array, JsValue> {
+        utils::set_panic_hook();
         let vec = self.into_vec().map_err(|_| JsValue::UNDEFINED)?;
         Ok(js_sys::Uint8Array::from(vec.as_slice()))
     }
@@ -74,6 +76,7 @@ pub struct Archive(Vec<u8>);
 #[wasm_bindgen]
 impl Archive {
     pub fn create(entries: Vec<Entry>) -> Self {
+        utils::set_panic_hook();
         let vec = Vec::new();
         let mut archive = libpna::Archive::write_header(vec).unwrap();
         for pna_entry in entries {
@@ -83,6 +86,7 @@ impl Archive {
     }
 
     pub async fn from(f: web_sys::Blob) -> Self {
+        utils::set_panic_hook();
         let array = JsFuture::from(f.array_buffer()).await.unwrap();
         let data = js_sys::Uint8Array::new(&array);
         Self(data.to_vec())
