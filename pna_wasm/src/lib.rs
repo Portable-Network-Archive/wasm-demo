@@ -1,9 +1,6 @@
 mod utils;
 
-use std::{
-    io::{self, prelude::*},
-    str::FromStr,
-};
+use std::io::{self, prelude::*};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
