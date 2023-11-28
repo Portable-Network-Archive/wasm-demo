@@ -11,7 +11,7 @@ import bytes from "bytes";
 export default dynamic(
   async () => {
     const init = await import("pna");
-    init.default();
+    await init.default();
     return () => Extract(init);
   },
   {
