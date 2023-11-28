@@ -19,10 +19,19 @@ export default dynamic(
   },
 );
 
-function Extract(pna: typeof import("pna")) {
+function Extract(_: typeof import("pna")) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [archives, setArchives] = useState<File[]>([]);
   const [entries, setEntries] = useState<File[]>([]);
+  const worker = new Worker(new URL("@/lib/extractWorker.ts", import.meta.url));
+  worker.addEventListener("message", (e: MessageEvent<[number, File]>) => {
+    const [index, data] = e.data;
+    setEntries((current) => {
+      const newOne = [...current];
+      newOne[index] = data;
+      return newOne;
+    });
+  });
   function preventDefaults<E, C, T>(event: React.BaseSyntheticEvent<E, C, T>) {
     event.preventDefault();
     event.stopPropagation();
@@ -81,15 +90,7 @@ function Extract(pna: typeof import("pna")) {
           if (a === undefined) {
             return;
           }
-          let archive = await pna.Archive.from(a);
-          let result = await Promise.all(
-            (await archive.entries()).array().map(async (entry) => {
-              let path = entry.name();
-              let data = await entry.extract();
-              return new File([data], path);
-            }),
-          );
-          setEntries(result);
+          worker.postMessage(a);
         }}
       />
       <div>
