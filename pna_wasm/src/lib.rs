@@ -105,6 +105,10 @@ impl Archive {
         self._entries().map_err(|_| JsValue::UNDEFINED)
     }
 
+    pub async fn extract_to_entries(blob: web_sys::Blob) -> Result<Entries, JsValue> {
+        Self::from(blob).await.entries().await
+    }
+
     pub fn to_u8array(&self) -> js_sys::Uint8Array {
         js_sys::Uint8Array::from(self.0.as_slice())
     }
