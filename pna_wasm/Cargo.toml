@@ -3,6 +3,7 @@ name = "pna"
 version = "0.0.0"
 authors = ["ChanTsune <41658782+ChanTsune@users.noreply.github.com>"]
 edition = "2021"
+license = "MIT"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
