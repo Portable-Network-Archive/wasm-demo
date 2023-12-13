@@ -44,16 +44,16 @@ impl Entry {
         self.0.header().path().to_string()
     }
 
-    fn into_vec(self) -> io::Result<Vec<u8>> {
-        let mut reader = self.0.into_reader(libpna::ReadOption::builder().build())?;
+    fn to_vec(&self) -> io::Result<Vec<u8>> {
+        let mut reader = self.0.reader(libpna::ReadOption::builder().build())?;
         let mut data = Vec::new();
         reader.read_to_end(&mut data)?;
         Ok(data)
     }
 
-    pub async fn extract(self) -> Result<js_sys::Uint8Array, JsValue> {
+    pub async fn extract(&self) -> Result<js_sys::Uint8Array, JsValue> {
         utils::set_panic_hook();
-        let vec = self.into_vec().map_err(|_| JsValue::UNDEFINED)?;
+        let vec = self.to_vec().map_err(|_| JsValue::UNDEFINED)?;
         Ok(js_sys::Uint8Array::from(vec.as_slice()))
     }
 }
@@ -124,6 +124,6 @@ mod tests {
         let entries = vec![Entry::from("pna_entry.txt", b"wasm test!").unwrap()];
         let archive = Archive::create(entries.clone());
         let entry = archive.entries().await.unwrap().array().pop().unwrap();
-        assert_eq!(entry.into_vec().unwrap().as_slice(), b"wasm test!");
+        assert_eq!(entry.to_vec().unwrap().as_slice(), b"wasm test!");
     }
 }
