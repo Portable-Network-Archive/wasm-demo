@@ -44,16 +44,20 @@ impl Entry {
         self.0.header().path().to_string()
     }
 
-    fn to_vec(&self) -> io::Result<Vec<u8>> {
-        let mut reader = self.0.reader(libpna::ReadOption::builder().build())?;
+    pub fn is_encrypted(&self) -> bool {
+        self.0.header().encryption() != libpna::Encryption::No
+    }
+
+    fn to_vec(&self, password: Option<String>) -> io::Result<Vec<u8>> {
+        let mut reader = self.0.reader(libpna::ReadOption::with_password(password))?;
         let mut data = Vec::new();
         reader.read_to_end(&mut data)?;
         Ok(data)
     }
 
-    pub async fn extract(&self) -> Result<js_sys::Uint8Array, JsValue> {
+    pub async fn extract(&self, password: Option<String>) -> Result<js_sys::Uint8Array, JsValue> {
         utils::set_panic_hook();
-        let vec = self.to_vec().map_err(|_| JsValue::UNDEFINED)?;
+        let vec = self.to_vec(password).map_err(|_| JsValue::UNDEFINED)?;
         Ok(js_sys::Uint8Array::from(vec.as_slice()))
     }
 }
@@ -105,6 +109,12 @@ impl Archive {
         self._entries().map_err(|_| JsValue::UNDEFINED)
     }
 
+    pub fn is_encrypted(&self) -> bool {
+        self._entries()
+            .map(|it| it.0.iter().any(|it| it.is_encrypted()))
+            .unwrap_or(false)
+    }
+
     pub async fn extract_to_entries(blob: web_sys::Blob) -> Result<Entries, JsValue> {
         Self::from(blob).await.entries().await
     }
@@ -124,6 +134,6 @@ mod tests {
         let entries = vec![Entry::from("pna_entry.txt", b"wasm test!").unwrap()];
         let archive = Archive::create(entries.clone());
         let entry = archive.entries().await.unwrap().array().pop().unwrap();
-        assert_eq!(entry.to_vec().unwrap().as_slice(), b"wasm test!");
+        assert_eq!(entry.to_vec(None).unwrap().as_slice(), b"wasm test!");
     }
 }

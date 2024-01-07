@@ -19,7 +19,7 @@ export default dynamic(
   },
 );
 
-function Extract(_: typeof import("pna")) {
+function Extract(pna: typeof import("pna")) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [archives, setArchives] = useState<File[]>([]);
   const [entries, setEntries] = useState<File[]>([]);
@@ -90,7 +90,13 @@ function Extract(_: typeof import("pna")) {
           if (a === undefined) {
             return;
           }
-          worker.postMessage(a);
+          let archive = await pna.Archive.from(a);
+          if (archive.is_encrypted()) {
+            const password = prompt(`Input password of archive`, "");
+            worker.postMessage([a, password]);
+          } else {
+            worker.postMessage([a, undefined]);
+          }
         }}
       />
       <div>
