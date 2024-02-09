@@ -99,7 +99,7 @@ impl Archive {
     fn _entries(&self) -> io::Result<Entries> {
         let mut archive = libpna::Archive::read_header(self.0.as_slice())?;
         let entries = archive
-            .entries()
+            .entries_skip_solid()
             .map(|it| it.map(Entry))
             .collect::<io::Result<Vec<_>>>()?;
         Ok(Entries(entries))
