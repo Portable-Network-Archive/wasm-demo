@@ -5,6 +5,7 @@ authors = ["ChanTsune <41658782+ChanTsune@users.noreply.github.com>"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/Portable-Network-Archive/wasm-demo.git"
+description = "pna wasm binding"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
