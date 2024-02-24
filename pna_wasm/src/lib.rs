@@ -96,22 +96,22 @@ impl Archive {
         Self(data.to_vec())
     }
 
-    fn _entries(&self) -> io::Result<Entries> {
+    fn _entries(&self) -> io::Result<Vec<Entry>> {
         let mut archive = libpna::Archive::read_header(self.0.as_slice())?;
         let entries = archive
             .entries_skip_solid()
             .map(|it| it.map(Entry))
             .collect::<io::Result<Vec<_>>>()?;
-        Ok(Entries(entries))
+        Ok(entries)
     }
 
     pub async fn entries(&self) -> Result<Entries, JsValue> {
-        self._entries().map_err(|_| JsValue::UNDEFINED)
+        self._entries().map(Entries).map_err(|_| JsValue::UNDEFINED)
     }
 
     pub fn is_encrypted(&self) -> bool {
         self._entries()
-            .map(|it| it.0.iter().any(|it| it.is_encrypted()))
+            .map(|it| it.iter().any(|it| it.is_encrypted()))
             .unwrap_or(false)
     }
 
