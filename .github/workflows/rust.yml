@@ -19,6 +19,9 @@ jobs:
     - name: Build WebAssembly
       run: npm run build:wasm
 
+    - name: Run WebAssembly tests
+      run: npm run test:wasm
+
   format:
     runs-on: ubuntu-latest
     steps:
