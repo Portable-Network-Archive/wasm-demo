@@ -11,9 +11,8 @@
     "format": "prettier --write './**/*.{js,jsx,ts,tsx,json,css}'",
     "format:check": "prettier --check './**/*.{js,jsx,ts,tsx,json,css}'",
     "format:cargo": "cd pna_wasm/ && cargo fmt --all",
-    "build:image": "cd pna_wasm/ && ./build-image.sh",
-    "build:wasm": "cd pna_wasm/ && ./wasm-pack.sh build --target web --release",
-    "test:wasm": "cd pna_wasm/ && ./wasm-pack.sh test --node --release"
+    "build:wasm": "cd pna_wasm/ && wasm-pack build --target web --release",
+    "test:wasm": "cd pna_wasm/ && wasm-pack test --node --release"
   },
   "dependencies": {
     "@next-tools/dynamic": "^0.0.11",
