@@ -130,10 +130,24 @@ mod tests {
     use wasm_bindgen_test::*;
 
     #[wasm_bindgen_test]
+    async fn pna_empty() {
+        let entries = vec![];
+        let archive = Archive::create(entries);
+        let entries = archive.entries().await.unwrap().array();
+        assert_eq!(entries.len(), 0);
+    }
+
+    #[wasm_bindgen_test]
     async fn pna() {
-        let entries = vec![Entry::from("pna_entry.txt", b"wasm test!").unwrap()];
-        let archive = Archive::create(entries.clone());
-        let entry = archive.entries().await.unwrap().array().pop().unwrap();
+        let entries = vec![
+            Entry::from("deflate.txt", b"wasm test!").unwrap(),
+            Entry::from("empty.txt", b"").unwrap(),
+        ];
+        let archive = Archive::create(entries);
+        let mut entries = archive.entries().await.unwrap().array();
+        let entry = entries.pop().unwrap();
+        assert_eq!(entry.to_vec(None).unwrap().as_slice(), b"");
+        let entry = entries.pop().unwrap();
         assert_eq!(entry.to_vec(None).unwrap().as_slice(), b"wasm test!");
     }
 }
