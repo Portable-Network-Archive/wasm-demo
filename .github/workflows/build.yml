@@ -19,8 +19,9 @@ jobs:
       with:
         node-version: 18
 
-    - name: Build Image
-      run: npm run build:image
+    - name: Install wasm-pack
+      run: |
+        curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
     - name: Build WebAssembly
       run: npm run build:wasm
