@@ -49,7 +49,9 @@ impl Entry {
     }
 
     fn to_vec(&self, password: Option<String>) -> io::Result<Vec<u8>> {
-        let mut reader = self.0.reader(libpna::ReadOptions::with_password(password))?;
+        let mut reader = self
+            .0
+            .reader(libpna::ReadOptions::with_password(password))?;
         let mut data = Vec::new();
         reader.read_to_end(&mut data)?;
         Ok(data)
