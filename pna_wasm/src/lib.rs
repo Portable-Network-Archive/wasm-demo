@@ -24,7 +24,7 @@ impl Entry {
     fn from(name: &str, data: &[u8]) -> io::Result<Self> {
         let mut entry = libpna::EntryBuilder::new_file(
             libpna::EntryName::from_lossy(name),
-            libpna::WriteOption::builder()
+            libpna::WriteOptions::builder()
                 .compression(libpna::Compression::ZStandard)
                 .build(),
         )?;
@@ -49,7 +49,7 @@ impl Entry {
     }
 
     fn to_vec(&self, password: Option<String>) -> io::Result<Vec<u8>> {
-        let mut reader = self.0.reader(libpna::ReadOption::with_password(password))?;
+        let mut reader = self.0.reader(libpna::ReadOptions::with_password(password))?;
         let mut data = Vec::new();
         reader.read_to_end(&mut data)?;
         Ok(data)
