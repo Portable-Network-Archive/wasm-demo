@@ -217,9 +217,9 @@ checksum = "11157ac094ffbdde99aa67b23417ebdd801842852b500e395a45a9c0aac03e4a"
 
 [[package]]
 name = "flate2"
-version = "1.0.30"
+version = "1.0.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f54427cfd1c7829e2a139fcefea601bf088ebca651d2bf53ebc600eac295dae"
+checksum = "7f211bbe8e69bbd0cfdea405084f128ae8b4aaa6b0b522fc8f2b009084797920"
 dependencies = [
  "crc32fast",
  "miniz_oxide",
@@ -304,9 +304,9 @@ dependencies = [
 
 [[package]]
 name = "libpna"
-version = "0.16.0"
+version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6205e2cfd0196291f285a13f8250107cf49a6fe817216257f268aa4491bed24a"
+checksum = "8f64598348e5870aeff60f7471964e6804a81a35f1c888a13c67e144d8661cb7"
 dependencies = [
  "aes",
  "argon2",
