@@ -17,7 +17,7 @@ use wasm_bindgen_futures::JsFuture;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Entry(libpna::RegularEntry);
+pub struct Entry(libpna::NormalEntry);
 
 #[wasm_bindgen]
 impl Entry {
