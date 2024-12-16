@@ -27,7 +27,7 @@ console_error_panic_hook = { version = "0.1.7", optional = true }
 web-sys = { version = "0.3.72", features = ["File"] }
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.43"
+wasm-bindgen-test = "0.3.45"
 
 [profile.release]
 # Tell `rustc` to optimize for small code size.
