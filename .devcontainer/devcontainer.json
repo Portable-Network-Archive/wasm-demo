@@ -1,0 +1,27 @@
+{
+  "name": "wasm-demo",
+  "dockerComposeFile": "compose.yml",
+  "service": "app",
+  "runServices": ["app"],
+  "workspaceFolder": "/workspaces/wasm-demo",
+  "remoteUser": "node",
+  "containerEnv": {
+    "NEXT_TELEMETRY_DISABLED": "1"
+  },
+  "forwardPorts": [3000],
+  "postCreateCommand": "npm run build:wasm && npm install",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "editor.tabSize": 2,
+        "files.eol": "\n",
+        "terminal.integrated.defaultProfile.linux": "zsh"
+      },
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "rust-lang.rust-analyzer"
+      ]
+    }
+  }
+}
