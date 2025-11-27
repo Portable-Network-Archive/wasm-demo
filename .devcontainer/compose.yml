@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - ..:/workspaces/wasm-demo:cached
+      # Uncomment to bind an external host directory into the devcontainer:
+      # - /absolute/host/path:/workspaces/external:cached
+    environment:
+      NEXT_TELEMETRY_DISABLED: "1"
+    init: true
+    user: "node"
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
