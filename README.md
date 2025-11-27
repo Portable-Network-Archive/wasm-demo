@@ -11,7 +11,6 @@ You can try create PNA file and extract it.
 First, run the development server:
 
 ```bash
-npm run build:image
 npm run build:wasm
 npm install
 npm run build
