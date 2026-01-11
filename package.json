@@ -7,7 +7,9 @@
   },
   "devEngines": {
     "packageManager": {
-      "name": "npm"
+      "name": "npm",
+      "version": "10.8.2",
+      "onFail": "download"
     }
   },
   "scripts": {
