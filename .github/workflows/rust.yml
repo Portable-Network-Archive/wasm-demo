@@ -1,6 +1,11 @@
 name: Check Rust build
 on:
+  merge_group:
+    branches:
+      - main
   pull_request:
+    branches:
+      - main
   push:
     paths:
         - ".github/**"
