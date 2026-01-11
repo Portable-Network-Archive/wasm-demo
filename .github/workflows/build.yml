@@ -22,6 +22,7 @@ jobs:
       with:
         node-version-file: package.json
         cache: npm
+        package-manager-cache: true
 
     - name: Setup rust
       run: |
