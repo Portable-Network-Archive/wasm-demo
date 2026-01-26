@@ -27,7 +27,7 @@
   "dependencies": {
     "@next-tools/dynamic": "^0.0.11",
     "bytes": "^3.1.2",
-    "next": "^14",
+    "next": "^16",
     "pna": "file:./pna_wasm/pkg",
     "react": "^18",
     "react-dom": "^18"
