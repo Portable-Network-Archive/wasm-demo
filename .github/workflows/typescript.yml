@@ -1,0 +1,76 @@
+name: Check TypeScript
+permissions:
+  contents: read
+on:
+  merge_group:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v6
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: package.json
+        cache: npm
+        package-manager-cache: true
+
+    - name: Setup rust
+      run: |
+        rustup toolchain install 1.77
+        rustup default 1.77
+
+    - name: Install wasm-pack
+      run: |
+        curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+    - name: Build WebAssembly
+      run: npm run build:wasm
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Lint
+      run: npm run lint
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v6
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: package.json
+        cache: npm
+        package-manager-cache: true
+
+    - name: Setup rust
+      run: |
+        rustup toolchain install 1.77
+        rustup default 1.77
+
+    - name: Install wasm-pack
+      run: |
+        curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+    - name: Build WebAssembly
+      run: npm run build:wasm
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Check code format
+      run: npm run format:check
