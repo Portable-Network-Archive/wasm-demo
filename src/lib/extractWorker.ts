@@ -11,11 +11,11 @@ workder.addEventListener(
       try {
         if (entry.is_encrypted()) {
           const data = await entry.extract(password);
-          const file = new File([data], path);
+          const file = new File([new Uint8Array(data)], path);
           workder.postMessage([idx, file]);
         } else {
           const data = await entry.extract();
-          const file = new File([data], path);
+          const file = new File([new Uint8Array(data)], path);
           workder.postMessage([idx, file]);
         }
       } catch (e) {

@@ -90,7 +90,7 @@ function Create(pna: typeof import("pna")) {
         <div>
           <ul className={styles["link-card-grid"]}>
             <Card
-              href={URL.createObjectURL(new Blob([archive]))}
+              href={URL.createObjectURL(new Blob([new Uint8Array(archive)]))}
               title="Download"
               rightIcon={<span>&darr;</span>}
               body={"archive.pna" + " : " + bytes(archive.length)}
