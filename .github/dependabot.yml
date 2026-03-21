@@ -17,3 +17,15 @@ updates:
     open-pull-requests-limit: 10
     ignore:
       - dependency-name: "pna"
+    groups:
+      eslint:
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "@typescript-eslint/*"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
