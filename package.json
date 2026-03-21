@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "bytes": "^3.1.2",
-    "next": "^15",
+    "next": "^16",
     "pna": "file:./pna_wasm/pkg",
     "react": "^19",
     "react-dom": "^19"
