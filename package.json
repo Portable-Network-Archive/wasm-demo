@@ -16,7 +16,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "next": "next",
     "format": "prettier --write './**/*.{js,jsx,ts,tsx,json,css}'",
     "format:check": "prettier --check './**/*.{js,jsx,ts,tsx,json,css}'",
