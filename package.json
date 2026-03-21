@@ -25,18 +25,17 @@
     "test:wasm": "cd pna_wasm/ && wasm-pack test --node --release"
   },
   "dependencies": {
-    "@next-tools/dynamic": "^0.0.11",
     "bytes": "^3.1.2",
-    "next": "^14",
+    "next": "^15",
     "pna": "file:./pna_wasm/pkg",
-    "react": "^18",
-    "react-dom": "^18"
+    "react": "^19",
+    "react-dom": "^19"
   },
   "devDependencies": {
     "@types/bytes": "^3.1.5",
     "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "@typescript-eslint/parser": "^8.57.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
