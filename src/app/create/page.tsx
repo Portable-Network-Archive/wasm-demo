@@ -7,6 +7,7 @@ import DropArea from "@/components/DripArea";
 import dynamic from "next/dynamic";
 import Card from "@/components/Card";
 import bytes from "bytes";
+import { formatError } from "@/lib/formatError";
 
 export default dynamic(
   async () => {
@@ -23,6 +24,7 @@ function Create(pna: typeof import("pna")) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [archive, setArchive] = useState<Uint8Array | null>(null);
   const [files, setFiles] = useState<File[]>([]);
+  const [error, setError] = useState<string | null>(null);
   function preventDefaults<E, C, T>(event: React.BaseSyntheticEvent<E, C, T>) {
     event.preventDefault();
     event.stopPropagation();
@@ -34,7 +36,8 @@ function Create(pna: typeof import("pna")) {
   }
   function addItems(fileList: FileList) {
     let items = Array.from(fileList);
-    setFiles([...files, ...items]);
+    setError(null);
+    setFiles((prev) => [...prev, ...items]);
   }
 
   return (
@@ -56,10 +59,24 @@ function Create(pna: typeof import("pna")) {
               <label htmlFor="file">Drop your files here!</label>
             </li>
           ) : (
-            files.map((file) => (
-              <li key={file.name} className={styles["li"]}>
+            files.map((file, index) => (
+              <li
+                key={`${file.name}-${file.size}-${index}`}
+                className={styles["li"]}
+              >
                 <span className={styles["file-name"]}>{file.name}</span>
                 <span className={styles["file-size"]}>{bytes(file.size)}</span>
+                <button
+                  className={styles["remove-button"]}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setError(null);
+                    setFiles((prev) => prev.filter((_, i) => i !== index));
+                  }}
+                  aria-label={`Remove ${file.name}`}
+                >
+                  &times;
+                </button>
               </li>
             ))
           )}
@@ -79,13 +96,24 @@ function Create(pna: typeof import("pna")) {
         title="Create"
         disabled={files.length === 0}
         onClick={async () => {
-          const objects = await Promise.all(
-            files.map(async (f) => pna.Entry.new(f)),
-          );
-          const a = pna.Archive.create(objects);
-          setArchive(a.to_u8array());
+          setError(null);
+          setArchive(null);
+          try {
+            const objects = await Promise.all(
+              files.map(async (f) => pna.Entry.new(f)),
+            );
+            const a = pna.Archive.create(objects);
+            setArchive(a.to_u8array());
+          } catch (e) {
+            setError(formatError(e));
+          }
         }}
       />
+      {error && (
+        <p className={styles["error"]} role="alert">
+          {error}
+        </p>
+      )}
       {archive && (
         <div>
           <ul className={styles["link-card-grid"]}>
