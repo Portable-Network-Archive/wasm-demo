@@ -3,7 +3,7 @@ import styles from "./page.module.css";
 import Button from "@/components/Button";
 import BackButton from "@/components/BackButton";
 import React, { useRef, useState } from "react";
-import DropArea from "@/components/DripArea";
+import DropArea from "@/components/DropArea";
 import dynamic from "next/dynamic";
 import Card from "@/components/Card";
 import bytes from "bytes";
