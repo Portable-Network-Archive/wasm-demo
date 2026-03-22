@@ -25,12 +25,25 @@ export default dynamic(
   },
 );
 
+function formatRatio(original: number, compressed: number): string {
+  if (original <= 0) return "";
+  if (compressed <= original) {
+    return `${Math.round((1 - compressed / original) * 100)}% smaller`;
+  }
+  return `${Math.round((compressed / original - 1) * 100)}% overhead`;
+}
+
 function Create(pna: typeof import("pna")) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [archive, setArchive] = useState<Uint8Array | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [stats, setStats] = useState<{
+    originalSize: number;
+    archiveSize: number;
+    duration: number;
+  } | null>(null);
 
   const archiveUrl = useMemo(() => {
     if (!archive) return null;
@@ -121,12 +134,22 @@ function Create(pna: typeof import("pna")) {
           setIsProcessing(true);
           setError(null);
           setArchive(null);
+          setStats(null);
+          const startTime = performance.now();
           try {
             const objects = await Promise.all(
               files.map(async (f) => pna.Entry.new(f)),
             );
             const a = pna.Archive.create(objects);
-            setArchive(a.to_u8array());
+            const result = a.to_u8array();
+            const duration = performance.now() - startTime;
+            const originalSize = files.reduce((sum, f) => sum + f.size, 0);
+            setArchive(result);
+            setStats({
+              originalSize,
+              archiveSize: result.length,
+              duration,
+            });
           } catch (e) {
             setError(formatError(e));
           } finally {
@@ -138,6 +161,15 @@ function Create(pna: typeof import("pna")) {
         <p className={styles["error"]} role="alert">
           {error}
         </p>
+      )}
+      {stats && (
+        <div className={styles["stats"]}>
+          <span>
+            {bytes(stats.originalSize)} → {bytes(stats.archiveSize)}
+          </span>
+          <span>{formatRatio(stats.originalSize, stats.archiveSize)}</span>
+          <span>{Math.round(stats.duration)}ms</span>
+        </div>
       )}
       {archiveUrl && archive && (
         <div>
