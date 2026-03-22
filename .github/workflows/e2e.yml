@@ -1,0 +1,65 @@
+name: E2E Tests
+permissions:
+  contents: read
+on:
+  merge_group:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v6
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: package.json
+        cache: npm
+        package-manager-cache: true
+
+    - name: Setup rust
+      run: |
+        rustup toolchain install 1.77
+        rustup default 1.77
+
+    - name: Install wasm-pack
+      run: |
+        curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+    - name: Build WebAssembly
+      run: npm run build:wasm
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Install Playwright Browsers
+      run: npx playwright install chromium --with-deps
+
+    - name: Build Next.js
+      # No BASE_PATH set — tests run at localhost:3000/ without basePath prefix.
+      # Production builds in build.yml set BASE_PATH for GitHub Pages.
+      run: npm run build
+
+    - name: Run E2E Tests
+      run: npm run test:e2e
+
+    - name: Upload Test Report
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 7
