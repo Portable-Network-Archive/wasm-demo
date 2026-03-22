@@ -17,6 +17,11 @@ export default dynamic(
   },
   {
     ssr: false,
+    loading: () => (
+      <main className={styles["main"]}>
+        <p style={{ textAlign: "center" }}>Loading WebAssembly module...</p>
+      </main>
+    ),
   },
 );
 
