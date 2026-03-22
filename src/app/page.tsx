@@ -1,4 +1,3 @@
-import Image from "next/image";
 import styles from "./page.module.css";
 import Card from "@/components/Card";
 
@@ -8,12 +7,33 @@ export default function Home() {
       <h1 className={styles["h1"]}>
         Welcome to <span className={styles["text-gradient"]}>WASM PNA</span>
       </h1>
-      <p className={styles["instructions"]}>
-        Try <code>WASM PNA</code> which works entirely in your browser, without
-        uploading files online.
-        <br />
-        <strong>Challenge:</strong> &quot;Create&quot; PNA in your browser.
-      </p>
+      <section className={styles["about"]}>
+        <h2>What is PNA?</h2>
+        <p>
+          <strong>Portable Network Archive (PNA)</strong> is an extensible file
+          format for the lossless, portable, well-compressed archive of files.
+          Inspired by the PNG data structure, PNA provides:
+        </p>
+        <ul>
+          <li>
+            <strong>Compression</strong> — Deflate, ZStandard, LZMA
+          </li>
+          <li>
+            <strong>Encryption</strong> — AES, Camellia with CBC/CTR modes
+          </li>
+          <li>
+            <strong>Integrity</strong> — Chunk-based structure with CRC
+            validation
+          </li>
+          <li>
+            <strong>Splitting</strong> — Multi-part archive support
+          </li>
+        </ul>
+        <p>
+          This demo runs entirely in your browser via WebAssembly — no files are
+          uploaded to any server.
+        </p>
+      </section>
       <ul role="list" className={styles["link-card-grid"]}>
         <Card
           href="./create/"
