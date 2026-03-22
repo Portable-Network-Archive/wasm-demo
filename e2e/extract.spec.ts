@@ -9,6 +9,16 @@ import {
 
 setupConsoleErrorMonitoring();
 
+const EXTRACT_FIXTURE_DIR = path.join(__dirname, "fixtures", "extract");
+
+test.beforeAll(() => {
+  fs.mkdirSync(EXTRACT_FIXTURE_DIR, { recursive: true });
+  fs.writeFileSync(
+    path.join(EXTRACT_FIXTURE_DIR, "worker-test.txt"),
+    "worker test",
+  );
+});
+
 test.describe("Extract page", () => {
   test("page renders after WASM dynamic import", async ({ page }) => {
     await page.goto("/extract/");
@@ -27,6 +37,35 @@ test.describe("Extract page", () => {
     await expect(page.locator("h1")).toBeVisible();
     await page.getByText("\u2190").click();
     await expect(page).toHaveURL(/\/$/);
+  });
+
+  test("Worker is created only once across renders", async ({ page }) => {
+    // Patch Worker constructor to count instantiations before page loads
+    await page.addInitScript(() => {
+      const OriginalWorker = globalThis.Worker;
+      let count = 0;
+      (globalThis as any).__workerCreateCount = () => count;
+      globalThis.Worker = class extends OriginalWorker {
+        constructor(url: string | URL, opts?: WorkerOptions) {
+          super(url, opts);
+          count++;
+        }
+      } as typeof Worker;
+    });
+
+    await page.goto("/extract/");
+    await expect(page.locator("h1")).toHaveText("Extract PNA Archive");
+
+    // Trigger a re-render by adding a file then removing focus
+    const fileInput = page.locator('input[type="file"]');
+    await fileInput.setInputFiles(
+      path.join(__dirname, "fixtures", "extract", "worker-test.txt"),
+    );
+
+    const workerCount = await page.evaluate(() =>
+      (globalThis as any).__workerCreateCount(),
+    );
+    expect(workerCount).toBe(1);
   });
 
   // TODO: Add encrypted archive test — requires generating encrypted .pna fixtures
