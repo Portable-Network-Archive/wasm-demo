@@ -10,8 +10,8 @@ async function getPna() {
   return pnaModule;
 }
 
-const workder = self;
-workder.addEventListener(
+const worker = self;
+worker.addEventListener(
   "message",
   async (e: MessageEvent<[File, string | undefined]>) => {
     const [archive, password] = e.data;
@@ -23,16 +23,16 @@ workder.addEventListener(
           const path = entry.name();
           const data = await entry.extract(password);
           const file = new File([new Uint8Array(data)], path);
-          workder.postMessage([idx, file]);
+          worker.postMessage([idx, file]);
         } catch (e) {
-          workder.postMessage([
+          worker.postMessage([
             "error",
             `Failed to extract entry ${idx}: ${formatError(e)}`,
           ]);
         }
       });
     } catch (e) {
-      workder.postMessage([
+      worker.postMessage([
         "error",
         `Failed to read archive: ${formatError(e)}`,
       ]);
