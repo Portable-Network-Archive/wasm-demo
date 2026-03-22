@@ -31,6 +31,7 @@ function Extract(pna: typeof import("pna")) {
   const [archives, setArchives] = useState<File[]>([]);
   const [entries, setEntries] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const worker = new Worker(
@@ -147,13 +148,15 @@ function Extract(pna: typeof import("pna")) {
         />
       </DropArea>
       <Button
-        title="Extract"
-        disabled={archives.length === 0}
+        title={isProcessing ? "Extracting..." : "Extract"}
+        disabled={archives.length === 0 || isProcessing}
         onClick={async () => {
+          setIsProcessing(true);
           setError(null);
           setEntries([]);
           const a = archives.at(0);
           if (a === undefined) {
+            setIsProcessing(false);
             return;
           }
           try {
@@ -163,6 +166,7 @@ function Extract(pna: typeof import("pna")) {
               setError(
                 "Extraction worker is not available. Please reload the page.",
               );
+              setIsProcessing(false);
               return;
             }
             if (archive.is_encrypted()) {
@@ -173,6 +177,8 @@ function Extract(pna: typeof import("pna")) {
             }
           } catch (e) {
             setError(formatError(e));
+          } finally {
+            setIsProcessing(false);
           }
         }}
       />
