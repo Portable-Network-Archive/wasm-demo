@@ -30,6 +30,7 @@ function Create(pna: typeof import("pna")) {
   const [archive, setArchive] = useState<Uint8Array | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const archiveUrl = useMemo(() => {
     if (!archive) return null;
@@ -114,9 +115,10 @@ function Create(pna: typeof import("pna")) {
         />
       </DropArea>
       <Button
-        title="Create"
-        disabled={files.length === 0}
+        title={isProcessing ? "Creating..." : "Create"}
+        disabled={files.length === 0 || isProcessing}
         onClick={async () => {
+          setIsProcessing(true);
           setError(null);
           setArchive(null);
           try {
@@ -127,6 +129,8 @@ function Create(pna: typeof import("pna")) {
             setArchive(a.to_u8array());
           } catch (e) {
             setError(formatError(e));
+          } finally {
+            setIsProcessing(false);
           }
         }}
       />
