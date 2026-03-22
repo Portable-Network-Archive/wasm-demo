@@ -2,7 +2,7 @@
 import styles from "./page.module.css";
 import Button from "@/components/Button";
 import BackButton from "@/components/BackButton";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import DropArea from "@/components/DropArea";
 import dynamic from "next/dynamic";
 import Card from "@/components/Card";
@@ -25,6 +25,21 @@ function Create(pna: typeof import("pna")) {
   const [archive, setArchive] = useState<Uint8Array | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  const archiveUrl = useMemo(() => {
+    if (!archive) return null;
+    try {
+      return URL.createObjectURL(new Blob([new Uint8Array(archive)]));
+    } catch {
+      return null;
+    }
+  }, [archive]);
+
+  useEffect(() => {
+    return () => {
+      if (archiveUrl) URL.revokeObjectURL(archiveUrl);
+    };
+  }, [archiveUrl]);
   function preventDefaults<E, C, T>(event: React.BaseSyntheticEvent<E, C, T>) {
     event.preventDefault();
     event.stopPropagation();
@@ -114,11 +129,11 @@ function Create(pna: typeof import("pna")) {
           {error}
         </p>
       )}
-      {archive && (
+      {archiveUrl && archive && (
         <div>
           <ul className={styles["link-card-grid"]}>
             <Card
-              href={URL.createObjectURL(new Blob([new Uint8Array(archive)]))}
+              href={archiveUrl}
               title="Download"
               rightIcon={<span>&darr;</span>}
               body={"archive.pna" + " : " + bytes(archive.length)}
