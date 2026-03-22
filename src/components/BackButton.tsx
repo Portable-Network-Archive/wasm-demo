@@ -1,12 +1,13 @@
-import type { JSX } from "react";
 import styles from "./BackButtom.module.css";
 
-type Props = {} & JSX.IntrinsicElements["a"];
+type Props = {
+  href: string;
+};
 
 const Button: React.FC<Props> = ({ href }) => {
   return (
-    <a href={href} className={styles["return-link"]}>
-      <span>&larr;</span>
+    <a href={href} className={styles["return-link"]} aria-label="Back">
+      <span aria-hidden="true">&larr;</span>
     </a>
   );
 };
