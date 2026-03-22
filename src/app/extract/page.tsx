@@ -41,6 +41,7 @@ function Extract(pna: typeof import("pna")) {
       "message",
       (e: MessageEvent<[number, File] | ["error", string]>) => {
         const data = e.data;
+        setIsProcessing(false);
         if (data[0] === "error") {
           setError(data[1]);
           return;
@@ -54,11 +55,13 @@ function Extract(pna: typeof import("pna")) {
       },
     );
     worker.addEventListener("error", (event) => {
+      setIsProcessing(false);
       setError(
         `Worker error: ${event.message ?? "An unknown error occurred in the extraction worker."}`,
       );
     });
     worker.addEventListener("messageerror", () => {
+      setIsProcessing(false);
       setError("Failed to deserialize message from extraction worker.");
     });
     workerRef.current = worker;
@@ -96,7 +99,7 @@ function Extract(pna: typeof import("pna")) {
   }
   function addItems(files: File[]) {
     setError(null);
-    setArchives((prev) => [...prev, ...files]);
+    setArchives(files.slice(0, 1));
   }
 
   return (
@@ -177,7 +180,6 @@ function Extract(pna: typeof import("pna")) {
             }
           } catch (e) {
             setError(formatError(e));
-          } finally {
             setIsProcessing(false);
           }
         }}
