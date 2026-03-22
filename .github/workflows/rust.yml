@@ -22,8 +22,8 @@ jobs:
 
     - name: Setup rust
       run: |
-        rustup toolchain install 1.77
-        rustup default 1.77
+        rustup toolchain install 1.90
+        rustup default 1.90
 
     - name: Install wasm-pack
       run: |
