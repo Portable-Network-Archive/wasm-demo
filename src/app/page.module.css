@@ -46,6 +46,64 @@
 .about strong {
   color: rgb(var(--accent-light));
 }
+.section-title {
+  font-size: 1.5rem;
+  margin: 0 0 1rem;
+  color: rgb(var(--accent-light));
+}
+.why {
+  margin-bottom: 2rem;
+}
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(22ch, 1fr));
+  gap: 1rem;
+}
+.feature-card {
+  border: 1px solid rgba(var(--accent-light), 15%);
+  background: rgba(var(--accent-dark), 33%);
+  padding: 1rem;
+  border-radius: 8px;
+}
+.feature-card h3 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+  color: rgb(var(--accent-light));
+}
+.feature-card p {
+  font-size: 0.9rem;
+  margin: 0;
+  opacity: 0.85;
+  line-height: 1.5;
+}
+.cta {
+  margin-bottom: 2rem;
+}
+.get-started {
+  margin-bottom: 2rem;
+}
+.code-block {
+  border: 1px solid rgba(var(--accent-light), 15%);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.code-label {
+  font-size: 0.8rem;
+  color: rgb(var(--accent-light));
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.code-block pre {
+  margin: 0;
+  overflow-x: auto;
+}
+.code-block code {
+  font-size: 0.9rem;
+  color: #e0e0e0;
+}
 .link-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr));
