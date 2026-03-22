@@ -37,6 +37,27 @@
   text-align: right;
   vertical-align: bottom;
 }
+.remove-button {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0 0.5rem;
+  margin-left: 0.5rem;
+  line-height: 1;
+}
+.remove-button:hover {
+  color: #ff4040;
+}
+.error {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 5px;
+  padding: 0.75rem 1rem;
+  margin-top: 1rem;
+}
 .link-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr));

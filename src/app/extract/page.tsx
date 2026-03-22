@@ -7,6 +7,7 @@ import React, { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Card from "@/components/Card";
 import bytes from "bytes";
+import { formatError } from "@/lib/formatError";
 
 export default dynamic(
   async () => {
@@ -24,18 +25,35 @@ function Extract(pna: typeof import("pna")) {
   const workerRef = useRef<Worker | null>(null);
   const [archives, setArchives] = useState<File[]>([]);
   const [entries, setEntries] = useState<File[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const worker = new Worker(
       new URL("@/lib/extractWorker.ts", import.meta.url),
     );
-    worker.addEventListener("message", (e: MessageEvent<[number, File]>) => {
-      const [index, data] = e.data;
-      setEntries((current) => {
-        const newOne = [...current];
-        newOne[index] = data;
-        return newOne;
-      });
+    worker.addEventListener(
+      "message",
+      (e: MessageEvent<[number, File] | ["error", string]>) => {
+        const data = e.data;
+        if (data[0] === "error") {
+          setError(data[1]);
+          return;
+        }
+        const [index, file] = data;
+        setEntries((current) => {
+          const newOne = [...current];
+          newOne[index] = file;
+          return newOne;
+        });
+      },
+    );
+    worker.addEventListener("error", (event) => {
+      setError(
+        `Worker error: ${event.message ?? "An unknown error occurred in the extraction worker."}`,
+      );
+    });
+    worker.addEventListener("messageerror", () => {
+      setError("Failed to deserialize message from extraction worker.");
     });
     workerRef.current = worker;
     return () => worker.terminate();
@@ -50,7 +68,8 @@ function Extract(pna: typeof import("pna")) {
     addItems(Array.from(files));
   }
   function addItems(files: File[]) {
-    setArchives([...archives, ...files]);
+    setError(null);
+    setArchives((prev) => [...prev, ...files]);
   }
 
   return (
@@ -72,9 +91,20 @@ function Extract(pna: typeof import("pna")) {
               <label htmlFor="file">Drop your PNA file here!</label>
             </li>
           ) : (
-            archives.map((archive) => (
-              <li key={archive.name} className={styles["li"]}>
-                {archive.name}
+            archives.map((archive, index) => (
+              <li key={`${archive.name}-${index}`} className={styles["li"]}>
+                <span>{archive.name}</span>
+                <button
+                  className={styles["remove-button"]}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setError(null);
+                    setArchives((prev) => prev.filter((_, i) => i !== index));
+                  }}
+                  aria-label={`Remove ${archive.name}`}
+                >
+                  &times;
+                </button>
               </li>
             ))
           )}
@@ -94,21 +124,37 @@ function Extract(pna: typeof import("pna")) {
         title="Extract"
         disabled={archives.length === 0}
         onClick={async () => {
+          setError(null);
+          setEntries([]);
           let a = archives.at(0);
           if (a === undefined) {
             return;
           }
-          let archive = await pna.Archive.from(a);
-          const w = workerRef.current;
-          if (!w) return;
-          if (archive.is_encrypted()) {
-            const password = prompt(`Input password of archive`, "");
-            w.postMessage([a, password]);
-          } else {
-            w.postMessage([a, undefined]);
+          try {
+            let archive = await pna.Archive.from(a);
+            const w = workerRef.current;
+            if (!w) {
+              setError(
+                "Extraction worker is not available. Please reload the page.",
+              );
+              return;
+            }
+            if (archive.is_encrypted()) {
+              const password = prompt(`Input password of archive`, "");
+              w.postMessage([a, password]);
+            } else {
+              w.postMessage([a, undefined]);
+            }
+          } catch (e) {
+            setError(formatError(e));
           }
         }}
       />
+      {error && (
+        <p className={styles["error"]} role="alert">
+          {error}
+        </p>
+      )}
       <div>
         <ul role="list" className={styles["link-card-grid"]}>
           {entries.map((entry) => {
