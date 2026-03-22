@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/typescript-node:20-bookworm
+FROM mcr.microsoft.com/devcontainers/typescript-node:24-bookworm
 
 # Install Rust toolchain, wasm target, and wasm-pack for building pna_wasm
 RUN apt-get update \
