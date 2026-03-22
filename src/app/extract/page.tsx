@@ -3,7 +3,7 @@ import styles from "./page.module.css";
 import Button from "@/components/Button";
 import BackButton from "@/components/BackButton";
 import DropArea from "@/components/DripArea";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Card from "@/components/Card";
 import bytes from "bytes";
@@ -21,17 +21,25 @@ export default dynamic(
 
 function Extract(pna: typeof import("pna")) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const workerRef = useRef<Worker | null>(null);
   const [archives, setArchives] = useState<File[]>([]);
   const [entries, setEntries] = useState<File[]>([]);
-  const worker = new Worker(new URL("@/lib/extractWorker.ts", import.meta.url));
-  worker.addEventListener("message", (e: MessageEvent<[number, File]>) => {
-    const [index, data] = e.data;
-    setEntries((current) => {
-      const newOne = [...current];
-      newOne[index] = data;
-      return newOne;
+
+  useEffect(() => {
+    const worker = new Worker(
+      new URL("@/lib/extractWorker.ts", import.meta.url),
+    );
+    worker.addEventListener("message", (e: MessageEvent<[number, File]>) => {
+      const [index, data] = e.data;
+      setEntries((current) => {
+        const newOne = [...current];
+        newOne[index] = data;
+        return newOne;
+      });
     });
-  });
+    workerRef.current = worker;
+    return () => worker.terminate();
+  }, []);
   function preventDefaults<E, C, T>(event: React.BaseSyntheticEvent<E, C, T>) {
     event.preventDefault();
     event.stopPropagation();
@@ -91,11 +99,13 @@ function Extract(pna: typeof import("pna")) {
             return;
           }
           let archive = await pna.Archive.from(a);
+          const w = workerRef.current;
+          if (!w) return;
           if (archive.is_encrypted()) {
             const password = prompt(`Input password of archive`, "");
-            worker.postMessage([a, password]);
+            w.postMessage([a, password]);
           } else {
-            worker.postMessage([a, undefined]);
+            w.postMessage([a, undefined]);
           }
         }}
       />
