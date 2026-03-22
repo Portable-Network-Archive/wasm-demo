@@ -3,7 +3,7 @@ import styles from "./page.module.css";
 import Button from "@/components/Button";
 import BackButton from "@/components/BackButton";
 import DropArea from "@/components/DropArea";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Card from "@/components/Card";
 import bytes from "bytes";
@@ -58,6 +58,27 @@ function Extract(pna: typeof import("pna")) {
     workerRef.current = worker;
     return () => worker.terminate();
   }, []);
+
+  const entryUrls = useMemo(() => {
+    const urls = new Map<number, string>();
+    entries.forEach((entry, index) => {
+      if (entry) {
+        try {
+          urls.set(index, URL.createObjectURL(entry));
+        } catch {
+          // Silently skip — user already sees fewer download cards
+        }
+      }
+    });
+    return urls;
+  }, [entries]);
+
+  useEffect(() => {
+    return () => {
+      entryUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [entryUrls]);
+
   function preventDefaults<E, C, T>(event: React.BaseSyntheticEvent<E, C, T>) {
     event.preventDefault();
     event.stopPropagation();
@@ -126,12 +147,12 @@ function Extract(pna: typeof import("pna")) {
         onClick={async () => {
           setError(null);
           setEntries([]);
-          let a = archives.at(0);
+          const a = archives.at(0);
           if (a === undefined) {
             return;
           }
           try {
-            let archive = await pna.Archive.from(a);
+            const archive = await pna.Archive.from(a);
             const w = workerRef.current;
             if (!w) {
               setError(
@@ -157,12 +178,15 @@ function Extract(pna: typeof import("pna")) {
       )}
       <div>
         <ul role="list" className={styles["link-card-grid"]}>
-          {entries.map((entry) => {
-            let path = entry.name;
+          {entries.map((entry, index) => {
+            if (!entry) return null;
+            const url = entryUrls.get(index);
+            if (!url) return null;
+            const path = entry.name;
             return (
               <Card
-                key={path}
-                href={URL.createObjectURL(entry)}
+                key={`${path}-${index}`}
+                href={url}
                 title="Download"
                 rightIcon={<span>&darr;</span>}
                 body={path + " : " + bytes(entry.size)}

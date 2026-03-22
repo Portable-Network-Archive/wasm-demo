@@ -40,6 +40,7 @@ function Create(pna: typeof import("pna")) {
       if (archiveUrl) URL.revokeObjectURL(archiveUrl);
     };
   }, [archiveUrl]);
+
   function preventDefaults<E, C, T>(event: React.BaseSyntheticEvent<E, C, T>) {
     event.preventDefault();
     event.stopPropagation();
