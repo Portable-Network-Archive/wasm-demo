@@ -1,7 +1,6 @@
 "use client";
 import styles from "./page.module.css";
 import Button from "@/components/Button";
-import BackButton from "@/components/BackButton";
 import DropArea from "@/components/DropArea";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
@@ -139,7 +138,6 @@ function Extract(pna: typeof import("pna")) {
 
   return (
     <main className={styles["main"]}>
-      <BackButton href="../" />
       <h1 className={styles["h1"]}>Extract PNA Archive</h1>
       <p className={styles["steps"]}>
         1. Drop .pna file &rarr; 2. Click Extract &rarr; 3. Download entries

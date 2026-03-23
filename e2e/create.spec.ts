@@ -95,11 +95,10 @@ test.describe("Create page", () => {
     await expect(page.locator("a[download='world.txt']")).toBeVisible();
   });
 
-  test("back button navigates to home", async ({ page }) => {
+  test("header logo navigates to home", async ({ page }) => {
     await page.goto("/create/");
     await expect(page.locator("h1")).toBeVisible();
-    // Back button uses ← arrow; aria-label improvement is tracked separately
-    await page.getByText("\u2190").click();
+    await page.getByRole("link", { name: "PNA Demo" }).click();
     await expect(page).toHaveURL(/\/$/);
   });
 });

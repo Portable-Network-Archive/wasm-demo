@@ -32,10 +32,10 @@ test.describe("Extract page", () => {
     await expect(page.getByRole("button", { name: "Extract" })).toBeDisabled();
   });
 
-  test("back button navigates to home", async ({ page }) => {
+  test("header logo navigates to home", async ({ page }) => {
     await page.goto("/extract/");
     await expect(page.locator("h1")).toBeVisible();
-    await page.getByText("\u2190").click();
+    await page.getByRole("link", { name: "PNA Demo" }).click();
     await expect(page).toHaveURL(/\/$/);
   });
 

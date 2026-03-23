@@ -1,7 +1,6 @@
 "use client";
 import styles from "./page.module.css";
 import Button from "@/components/Button";
-import BackButton from "@/components/BackButton";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import DropArea from "@/components/DropArea";
 import dynamic from "next/dynamic";
@@ -77,7 +76,6 @@ function Create(pna: typeof import("pna")) {
 
   return (
     <main className={styles["main"]}>
-      <BackButton href="../" />
       <h1 className={styles["h1"]}>Create PNA Archive</h1>
       <p className={styles["steps"]}>
         1. Drop files &rarr; 2. Click Create &rarr; 3. Download
