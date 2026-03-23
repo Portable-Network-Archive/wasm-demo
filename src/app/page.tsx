@@ -4,6 +4,13 @@ import Card from "@/components/Card";
 export default function Home() {
   return (
     <main className={styles["main"]}>
+      <img
+        src="./favicon.svg"
+        alt=""
+        width={64}
+        height={64}
+        className={styles["logo"]}
+      />
       <h1 className={styles["h1"]}>
         Welcome to <span className={styles["text-gradient"]}>WASM PNA</span>
       </h1>
@@ -13,7 +20,10 @@ export default function Home() {
         <p>
           <strong>Portable Network Archive (PNA)</strong> is a flexible, secure,
           and cross-platform archive format inspired by the PNG data structure.
-          It combines the simplicity of ZIP with the robustness of TAR.
+          Like PNG, PNA uses a chunk-based structure where each piece of data is
+          self-contained with its own type, length, and checksum. This enables
+          individual file access without full decompression, robust error
+          detection, and natural streaming support.
         </p>
         <ul>
           <li>
