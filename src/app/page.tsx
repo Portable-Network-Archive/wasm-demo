@@ -4,13 +4,6 @@ import Card from "@/components/Card";
 export default function Home() {
   return (
     <main className={styles["main"]}>
-      <img
-        src="./favicon.svg"
-        alt=""
-        width={64}
-        height={64}
-        className={styles["logo"]}
-      />
       <h1 className={styles["h1"]}>
         Welcome to <span className={styles["text-gradient"]}>WASM PNA</span>
       </h1>
