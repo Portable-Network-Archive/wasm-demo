@@ -81,6 +81,7 @@ function Create(pna: typeof import("pna")) {
         1. Drop files &rarr; 2. Click Create &rarr; 3. Download
       </p>
       <DropArea
+        aria-label="Files to archive"
         onDragEnter={preventDefaults}
         onDragLeave={preventDefaults}
         onDragOver={preventDefaults}

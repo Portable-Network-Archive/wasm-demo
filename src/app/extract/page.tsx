@@ -143,6 +143,7 @@ function Extract(pna: typeof import("pna")) {
         1. Drop .pna file &rarr; 2. Click Extract &rarr; 3. Download entries
       </p>
       <DropArea
+        aria-label="Archive file to extract"
         onDragEnter={preventDefaults}
         onDragLeave={preventDefaults}
         onDragOver={preventDefaults}
