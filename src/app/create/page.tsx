@@ -79,6 +79,9 @@ function Create(pna: typeof import("pna")) {
     <main className={styles["main"]}>
       <BackButton href="../" />
       <h1 className={styles["h1"]}>Create PNA Archive</h1>
+      <p className={styles["steps"]}>
+        1. Drop files &rarr; 2. Click Create &rarr; 3. Download
+      </p>
       <DropArea
         onDragEnter={preventDefaults}
         onDragLeave={preventDefaults}
@@ -91,7 +94,7 @@ function Create(pna: typeof import("pna")) {
         <ul className={styles["ul"]}>
           {files.length === 0 ? (
             <li>
-              <label htmlFor="file">Drop your files here!</label>
+              <label htmlFor="file">Drop files here or click to browse</label>
             </li>
           ) : (
             files.map((file, index) => (
