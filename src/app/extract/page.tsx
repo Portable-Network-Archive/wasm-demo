@@ -32,6 +32,9 @@ function Extract(pna: typeof import("pna")) {
   const [entries, setEntries] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
+  const [password, setPassword] = useState("");
+  const [pendingArchive, setPendingArchive] = useState<File | null>(null);
 
   useEffect(() => {
     const worker = new Worker(
@@ -103,15 +106,44 @@ function Extract(pna: typeof import("pna")) {
     const files = event.dataTransfer.files;
     addItems(Array.from(files));
   }
+  function resetPasswordState() {
+    setShowPasswordInput(false);
+    setPendingArchive(null);
+    setPassword("");
+  }
+
   function addItems(files: File[]) {
     setError(null);
     setArchives(files.slice(0, 1));
+    resetPasswordState();
+  }
+
+  function submitPassword() {
+    const w = workerRef.current;
+    if (!w) {
+      setError("Extraction worker is not available. Please reload the page.");
+      resetPasswordState();
+      return;
+    }
+    if (!pendingArchive) return;
+    if (!password.trim()) {
+      setError("Please enter the archive password.");
+      return;
+    }
+    setIsProcessing(true);
+    setEntries([]);
+    setError(null);
+    w.postMessage([pendingArchive, password]);
+    resetPasswordState();
   }
 
   return (
     <main className={styles["main"]}>
       <BackButton href="../" />
       <h1 className={styles["h1"]}>Extract PNA Archive</h1>
+      <p className={styles["steps"]}>
+        1. Drop .pna file &rarr; 2. Click Extract &rarr; 3. Download entries
+      </p>
       <DropArea
         onDragEnter={preventDefaults}
         onDragLeave={preventDefaults}
@@ -124,7 +156,9 @@ function Extract(pna: typeof import("pna")) {
         <ul className={styles["ul"]}>
           {archives.length === 0 ? (
             <li>
-              <label htmlFor="file">Drop your PNA file here!</label>
+              <label htmlFor="file">
+                Drop .pna file here or click to browse
+              </label>
             </li>
           ) : (
             archives.map((archive, index) => (
@@ -136,6 +170,7 @@ function Extract(pna: typeof import("pna")) {
                     e.stopPropagation();
                     setError(null);
                     setArchives((prev) => prev.filter((_, i) => i !== index));
+                    resetPasswordState();
                   }}
                   aria-label={`Remove ${archive.name}`}
                 >
@@ -158,7 +193,7 @@ function Extract(pna: typeof import("pna")) {
       </DropArea>
       <Button
         title={isProcessing ? "Extracting..." : "Extract"}
-        disabled={archives.length === 0 || isProcessing}
+        disabled={archives.length === 0 || isProcessing || showPasswordInput}
         onClick={async () => {
           setIsProcessing(true);
           setError(null);
@@ -179,11 +214,12 @@ function Extract(pna: typeof import("pna")) {
               return;
             }
             if (archive.is_encrypted()) {
-              const password = prompt(`Input password of archive`, "");
-              w.postMessage([a, password]);
-            } else {
-              w.postMessage([a, undefined]);
+              setPendingArchive(a);
+              setShowPasswordInput(true);
+              setIsProcessing(false);
+              return;
             }
+            w.postMessage([a, undefined]);
           } catch (e) {
             setError(formatError(e));
             setIsProcessing(false);
@@ -194,6 +230,31 @@ function Extract(pna: typeof import("pna")) {
         <p className={styles["error"]} role="alert">
           {error}
         </p>
+      )}
+      {showPasswordInput && (
+        <div className={styles["password-form"]}>
+          <label htmlFor="archive-password">
+            This archive is encrypted. Enter the password:
+          </label>
+          <input
+            id="archive-password"
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                submitPassword();
+              }
+            }}
+          />
+          <Button
+            title="Decrypt & Extract"
+            disabled={!pendingArchive || !password.trim()}
+            onClick={submitPassword}
+          />
+        </div>
       )}
       <div>
         <ul role="list" className={styles["link-card-grid"]}>
