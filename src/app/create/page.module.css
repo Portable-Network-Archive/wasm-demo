@@ -76,6 +76,85 @@
   font-size: 0.9rem;
   color: rgb(var(--accent-light));
 }
+.encryption-options {
+  margin: 0 auto 1.5rem;
+  max-width: 300px;
+}
+.encryption-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.2s ease;
+}
+.encryption-toggle:hover {
+  color: white;
+}
+.encryption-toggle input[type="checkbox"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid rgba(var(--accent-light), 50%);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+.encryption-toggle input[type="checkbox"]:checked {
+  background: rgb(var(--accent));
+  border-color: rgb(var(--accent));
+}
+.encryption-toggle input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 1.5px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.encryption-fields {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.encryption-fields input[type="password"],
+.encryption-fields select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid rgba(var(--accent-light), 40%);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+.encryption-fields input[type="password"]::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+.encryption-fields select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='rgba(255,255,255,0.5)'%3E%3Cpath d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+.encryption-fields input:focus,
+.encryption-fields select:focus {
+  outline: none;
+  border-color: rgb(var(--accent));
+  box-shadow: 0 0 0 2px rgba(var(--accent), 0.2);
+}
 .link-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr));
