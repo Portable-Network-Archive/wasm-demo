@@ -4,7 +4,7 @@
   border: 2px dashed whitesmoke;
   border-radius: 1rem;
   text-align: center;
-  margin: 50px auto;
+  margin: 50px auto 24px;
 }
 .drop-area:focus-visible {
   outline: 2px solid rgb(var(--accent));
