@@ -32,12 +32,17 @@ function formatRatio(original: number, compressed: number): string {
   return `${Math.round((compressed / original - 1) * 100)}% overhead`;
 }
 
+type Algorithm = "aes" | "camellia";
+
 function Create(pna: typeof import("pna")) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [archive, setArchive] = useState<Uint8Array | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [useEncryption, setUseEncryption] = useState(false);
+  const [password, setPassword] = useState("");
+  const [algorithm, setAlgorithm] = useState<Algorithm>("aes");
   const [stats, setStats] = useState<{
     originalSize: number;
     archiveSize: number;
@@ -129,9 +134,45 @@ function Create(pna: typeof import("pna")) {
           }}
         />
       </DropArea>
+      <div className={styles["encryption-options"]}>
+        <label className={styles["encryption-toggle"]}>
+          <input
+            type="checkbox"
+            checked={useEncryption}
+            onChange={(e) => {
+              setUseEncryption(e.target.checked);
+              if (!e.target.checked) setPassword("");
+            }}
+          />
+          Encrypt archive
+        </label>
+        {useEncryption && (
+          <div className={styles["encryption-fields"]}>
+            <input
+              type="password"
+              placeholder="Password"
+              aria-label="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <select
+              value={algorithm}
+              onChange={(e) => setAlgorithm(e.target.value as Algorithm)}
+              aria-label="Encryption algorithm"
+            >
+              <option value="aes">AES-256</option>
+              <option value="camellia">Camellia-256</option>
+            </select>
+          </div>
+        )}
+      </div>
       <Button
         title={isProcessing ? "Creating..." : "Create"}
-        disabled={files.length === 0 || isProcessing}
+        disabled={
+          files.length === 0 ||
+          isProcessing ||
+          (useEncryption && !password.trim())
+        }
         onClick={async () => {
           setIsProcessing(true);
           setError(null);
@@ -139,8 +180,13 @@ function Create(pna: typeof import("pna")) {
           setStats(null);
           const startTime = performance.now();
           try {
+            const trimmedPassword = password.trim();
             const objects = await Promise.all(
-              files.map(async (f) => pna.Entry.new(f)),
+              files.map(async (f) =>
+                useEncryption
+                  ? pna.Entry.new_encrypted(f, trimmedPassword, algorithm)
+                  : pna.Entry.new(f),
+              ),
             );
             const a = pna.Archive.create(objects);
             const result = a.to_u8array();
