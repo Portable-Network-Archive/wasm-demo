@@ -82,27 +82,21 @@
 .get-started {
   margin-bottom: 2rem;
 }
-.code-block {
-  border: 1px solid rgba(var(--accent-light), 15%);
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
+.get-started-intro {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
 }
-.code-label {
-  font-size: 0.8rem;
-  color: rgb(var(--accent-light));
-  margin: 0 0 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.get-started-group {
+  margin-bottom: 1.5rem;
+  padding-left: 1rem;
+  border-left: 2px solid rgba(var(--accent), 0.4);
 }
-.code-block pre {
-  margin: 0;
-  overflow-x: auto;
-}
-.code-block code {
-  font-size: 0.9rem;
-  color: #e0e0e0;
+.group-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  color: rgba(255, 255, 255, 0.9);
 }
 .link-card-grid {
   display: grid;

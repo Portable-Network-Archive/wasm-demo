@@ -1,5 +1,6 @@
 import styles from "./page.module.css";
 import Card from "@/components/Card";
+import CodeBlock from "@/components/CodeBlock";
 
 export default function Home() {
   return (
@@ -108,17 +109,47 @@ export default function Home() {
 
       <section className={styles["get-started"]}>
         <h2 className={styles["section-title"]}>Get Started</h2>
-        <div className={styles["code-block"]}>
-          <p className={styles["code-label"]}>Install CLI</p>
-          <pre>
-            <code>cargo install portable-network-archive</code>
-          </pre>
+        <p className={styles["get-started-intro"]}>
+          PNA is available as a command-line tool and as a Rust library.
+        </p>
+        <div className={styles["get-started-group"]}>
+          <h3 className={styles["group-title"]}>Command-Line Tool</h3>
+          <CodeBlock label="Install">
+            cargo install portable-network-archive
+          </CodeBlock>
+          <CodeBlock label="Usage">
+            {[
+              "# Create an archive",
+              "pna create -f archive.pna file1.txt file2.txt",
+              "",
+              "# Extract an archive",
+              "pna extract -f archive.pna",
+              "",
+              "# List archive contents",
+              "pna list -f archive.pna",
+            ].join("\n")}
+          </CodeBlock>
         </div>
-        <div className={styles["code-block"]}>
-          <p className={styles["code-label"]}>Use as Library</p>
-          <pre>
-            <code>cargo add libpna</code>
-          </pre>
+        <div className={styles["get-started-group"]}>
+          <h3 className={styles["group-title"]}>Rust Library</h3>
+          <CodeBlock label="Install">cargo add libpna</CodeBlock>
+          <CodeBlock label="Example">
+            {[
+              "use libpna::{Archive, EntryBuilder, WriteOptions};",
+              "use std::io::Write;",
+              "",
+              'let file = std::fs::File::create("archive.pna")?;',
+              "let mut archive = Archive::write_header(file)?;",
+              "",
+              "let mut entry = EntryBuilder::new_file(",
+              '    "hello.txt".into(),',
+              "    WriteOptions::builder().build(),",
+              ")?;",
+              'entry.write_all(b"Hello, world!")?;',
+              "archive.add_entry(entry.build()?)?;",
+              "archive.finalize()?;",
+            ].join("\n")}
+          </CodeBlock>
         </div>
       </section>
 
