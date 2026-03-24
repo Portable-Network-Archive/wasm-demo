@@ -4,16 +4,9 @@ use std::io::{self, prelude::*};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
-// #[wasm_bindgen]
-// extern "C" {
-//     fn alert(s: &str);
-// }
-
-// #[wasm_bindgen]
-// pub fn greet(name: &str) {
-//     utils::set_panic_hook();
-//     alert(&format!("Hello {}", name));
-// }
+fn to_js_error(e: io::Error) -> JsValue {
+    JsValue::from_str(&e.to_string())
+}
 
 #[wasm_bindgen]
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -21,23 +14,68 @@ pub struct Entry(libpna::NormalEntry);
 
 #[wasm_bindgen]
 impl Entry {
-    fn from(name: &str, data: &[u8]) -> io::Result<Self> {
-        let mut entry = libpna::EntryBuilder::new_file(
-            libpna::EntryName::from_lossy(name),
-            libpna::WriteOptions::builder()
-                .compression(libpna::Compression::ZStandard)
-                .build(),
-        )?;
+    fn from(
+        name: &str,
+        data: &[u8],
+        password: Option<&str>,
+        encryption: Option<&str>,
+    ) -> io::Result<Self> {
+        let mut options = libpna::WriteOptions::builder();
+        options.compression(libpna::Compression::ZStandard);
+        match (password, encryption) {
+            (Some(pw), Some(enc)) => {
+                let algo = match enc {
+                    "aes" => libpna::Encryption::Aes,
+                    "camellia" => libpna::Encryption::Camellia,
+                    other => {
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidInput,
+                            format!(
+                                "Unsupported encryption algorithm: '{other}'. Use 'aes' or 'camellia'."
+                            ),
+                        ));
+                    }
+                };
+                options
+                    .encryption(algo)
+                    .cipher_mode(libpna::CipherMode::CTR)
+                    .password(Some(pw));
+            }
+            (None, None) => {}
+            _ => {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    "Password and encryption algorithm must both be provided or both be omitted.",
+                ));
+            }
+        }
+        let mut entry =
+            libpna::EntryBuilder::new_file(libpna::EntryName::from_lossy(name), options.build())?;
         entry.write_all(data)?;
         Ok(Self(entry.build()?))
     }
 
-    pub async fn new(f: web_sys::File) -> Result<Entry, JsValue> {
-        utils::set_panic_hook();
+    async fn read_file(f: &web_sys::File) -> Result<(String, Vec<u8>), JsValue> {
         let name = f.name();
         let array = JsFuture::from(f.array_buffer()).await?;
         let data = js_sys::Uint8Array::new(&array).to_vec();
-        Self::from(&name, &data).map_err(|_| JsValue::UNDEFINED)
+        Ok((name, data))
+    }
+
+    pub async fn new(f: web_sys::File) -> Result<Entry, JsValue> {
+        utils::set_panic_hook();
+        let (name, data) = Self::read_file(&f).await?;
+        Self::from(&name, &data, None, None).map_err(to_js_error)
+    }
+
+    pub async fn new_encrypted(
+        f: web_sys::File,
+        password: String,
+        algorithm: String,
+    ) -> Result<Entry, JsValue> {
+        utils::set_panic_hook();
+        let (name, data) = Self::read_file(&f).await?;
+        Self::from(&name, &data, Some(&password), Some(&algorithm)).map_err(to_js_error)
     }
 
     pub fn name(&self) -> String {
@@ -59,7 +97,7 @@ impl Entry {
 
     pub async fn extract(&self, password: Option<String>) -> Result<js_sys::Uint8Array, JsValue> {
         utils::set_panic_hook();
-        let vec = self.to_vec(password).map_err(|_| JsValue::UNDEFINED)?;
+        let vec = self.to_vec(password).map_err(to_js_error)?;
         Ok(js_sys::Uint8Array::from(vec.as_slice()))
     }
 }
@@ -108,7 +146,7 @@ impl Archive {
     }
 
     pub async fn entries(&self) -> Result<Entries, JsValue> {
-        self._entries().map(Entries).map_err(|_| JsValue::UNDEFINED)
+        self._entries().map(Entries).map_err(to_js_error)
     }
 
     pub fn is_encrypted(&self) -> bool {
@@ -142,14 +180,67 @@ mod tests {
     #[wasm_bindgen_test]
     async fn pna() {
         let entries = vec![
-            Entry::from("deflate.txt", b"wasm test!").unwrap(),
-            Entry::from("empty.txt", b"").unwrap(),
+            Entry::from("deflate.txt", b"wasm test!", None, None).unwrap(),
+            Entry::from("empty.txt", b"", None, None).unwrap(),
         ];
         let archive = Archive::create(entries);
+        assert!(!archive.is_encrypted());
         let mut entries = archive.entries().await.unwrap().array();
         let entry = entries.pop().unwrap();
         assert_eq!(entry.to_vec(None).unwrap().as_slice(), b"");
         let entry = entries.pop().unwrap();
         assert_eq!(entry.to_vec(None).unwrap().as_slice(), b"wasm test!");
+    }
+
+    #[wasm_bindgen_test]
+    async fn pna_encrypted() {
+        let password = "test_password";
+        let entries =
+            vec![
+                Entry::from("secret.txt", b"encrypted data", Some(password), Some("aes")).unwrap(),
+            ];
+        let archive = Archive::create(entries);
+        assert!(archive.is_encrypted());
+        let mut entries = archive.entries().await.unwrap().array();
+        let entry = entries.pop().unwrap();
+        assert!(entry.is_encrypted());
+        assert_eq!(
+            entry.to_vec(Some(password.to_string())).unwrap().as_slice(),
+            b"encrypted data"
+        );
+    }
+
+    #[wasm_bindgen_test]
+    async fn pna_encrypted_camellia() {
+        let entries =
+            vec![Entry::from("cam.txt", b"camellia", Some("pw"), Some("camellia")).unwrap()];
+        let archive = Archive::create(entries);
+        assert!(archive.is_encrypted());
+        let entry = &archive.entries().await.unwrap().array()[0];
+        assert_eq!(
+            entry.to_vec(Some("pw".to_string())).unwrap().as_slice(),
+            b"camellia"
+        );
+    }
+
+    #[wasm_bindgen_test]
+    async fn pna_encrypted_wrong_password() {
+        let entries =
+            vec![Entry::from("secret.txt", b"data", Some("correct"), Some("aes")).unwrap()];
+        let archive = Archive::create(entries);
+        let entry = &archive.entries().await.unwrap().array()[0];
+        assert!(entry.to_vec(Some("wrong".to_string())).is_err());
+    }
+
+    #[wasm_bindgen_test]
+    async fn pna_encrypted_invalid_algorithm() {
+        let result = Entry::from("f.txt", b"data", Some("pw"), Some("blowfish"));
+        assert!(result.is_err());
+    }
+
+    #[wasm_bindgen_test]
+    async fn pna_encrypted_mismatched_args() {
+        assert!(Entry::from("f.txt", b"data", Some("pw"), None).is_err());
+        assert!(Entry::from("f.txt", b"data", None, Some("aes")).is_err());
     }
 }
