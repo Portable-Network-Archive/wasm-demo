@@ -95,6 +95,23 @@ test.describe("Create page", () => {
     await expect(page.locator("a[download='world.txt']")).toBeVisible();
   });
 
+  test("can create an encrypted archive", async ({ page }) => {
+    await page.goto("/create/");
+    await expect(page.locator("h1")).toBeVisible();
+
+    const fileInput = page.locator('input[type="file"]');
+    await fileInput.setInputFiles(TEST_FILE_PATH);
+
+    await page.getByLabel("Encrypt archive").check();
+    await page.locator('input[type="password"]').fill("test_password");
+
+    const createButton = page.getByRole("button", { name: "Create" });
+    await createButton.click();
+
+    const downloadLink = page.locator("a[download='archive.pna']");
+    await expect(downloadLink).toBeVisible({ timeout: 15_000 });
+  });
+
   test("header logo navigates to home", async ({ page }) => {
     await page.goto("/create/");
     await expect(page.locator("h1")).toBeVisible();

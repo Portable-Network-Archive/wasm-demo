@@ -68,9 +68,54 @@ test.describe("Extract page", () => {
     expect(workerCount).toBe(1);
   });
 
-  // TODO: Add encrypted archive test — requires generating encrypted .pna fixtures
-  // from Rust/CLI tooling. Skipped until fixture generation is available.
-  test.skip("can extract an encrypted archive", async () => {});
+  test("can extract an encrypted archive", async ({ page }) => {
+    const FIXTURE_DIR = path.join(__dirname, "fixtures", "extract");
+    fs.mkdirSync(FIXTURE_DIR, { recursive: true });
+    const testFile = path.join(FIXTURE_DIR, "encrypted-test.txt");
+    fs.writeFileSync(testFile, "encrypted content");
+
+    // Create encrypted archive via Create page
+    await page.goto("/create/");
+    await expect(page.locator("h1")).toBeVisible();
+
+    const fileInput = page.locator('input[type="file"]');
+    await fileInput.setInputFiles(testFile);
+
+    await page.getByLabel("Encrypt archive").check();
+    await page.locator('input[type="password"]').fill("e2e_password");
+    await page.getByRole("button", { name: "Create" }).click();
+
+    const downloadLink = page.locator("a[download='archive.pna']");
+    await expect(downloadLink).toBeVisible({ timeout: 15_000 });
+
+    const href = await downloadLink.getAttribute("href");
+    const archiveBuffer = await fetchBlobAsBytes(page, href!);
+    const archivePath = path.join(FIXTURE_DIR, "encrypted.pna");
+    fs.writeFileSync(archivePath, Buffer.from(archiveBuffer));
+
+    // Extract on Extract page with password
+    await page.goto("/extract/");
+    await expect(page.locator("h1")).toBeVisible();
+
+    const extractInput = page.locator('input[type="file"]');
+    await extractInput.setInputFiles(archivePath);
+    await page.getByRole("button", { name: "Extract" }).click();
+
+    // Password form should appear
+    await expect(page.locator("#archive-password")).toBeVisible({
+      timeout: 10_000,
+    });
+    await page.locator("#archive-password").fill("e2e_password");
+    await page.getByRole("button", { name: "Decrypt & Extract" }).click();
+
+    // Verify extracted entry and content
+    const entryLink = page.locator("a[download='encrypted-test.txt']");
+    await expect(entryLink).toBeVisible({ timeout: 15_000 });
+
+    const extractedHref = await entryLink.getAttribute("href");
+    const extractedContent = await fetchBlobAsText(page, extractedHref!);
+    expect(extractedContent).toBe("encrypted content");
+  });
 });
 
 test.describe("Create and Extract round-trip", () => {
