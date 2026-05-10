@@ -136,27 +136,37 @@ impl Archive {
         Self(data.to_vec())
     }
 
-    fn _entries(&self) -> io::Result<Vec<Entry>> {
+    fn _entries(&self, password: Option<&[u8]>) -> io::Result<Vec<Entry>> {
         let mut archive = libpna::Archive::read_header(self.0.as_slice())?;
         let entries = archive
-            .entries_with_password(None)
+            .entries_with_password(password)
             .map(|r| r.map(Entry))
             .collect::<io::Result<Vec<_>>>()?;
         Ok(entries)
     }
 
-    pub async fn entries(&self) -> Result<Entries, JsValue> {
-        self._entries().map(Entries).map_err(to_js_error)
+    pub async fn entries(&self, password: Option<String>) -> Result<Entries, JsValue> {
+        self._entries(password.as_deref().map(str::as_bytes))
+            .map(Entries)
+            .map_err(to_js_error)
     }
 
     pub fn is_encrypted(&self) -> bool {
-        self._entries()
-            .map(|it| it.iter().any(|it| it.is_encrypted()))
-            .unwrap_or(false)
+        let Ok(mut archive) = libpna::Archive::read_header(self.0.as_slice()) else {
+            return false;
+        };
+        archive.entries().any(|r| match r {
+            Ok(libpna::ReadEntry::Normal(n)) => n.header().encryption() != libpna::Encryption::No,
+            Ok(libpna::ReadEntry::Solid(s)) => s.encryption() != libpna::Encryption::No,
+            Err(_) => false,
+        })
     }
 
-    pub async fn extract_to_entries(blob: web_sys::Blob) -> Result<Entries, JsValue> {
-        Self::from(blob).await.entries().await
+    pub async fn extract_to_entries(
+        blob: web_sys::Blob,
+        password: Option<String>,
+    ) -> Result<Entries, JsValue> {
+        Self::from(blob).await.entries(password).await
     }
 
     pub fn to_u8array(&self) -> js_sys::Uint8Array {
@@ -173,7 +183,7 @@ mod tests {
     async fn pna_empty() {
         let entries = vec![];
         let archive = Archive::create(entries);
-        let entries = archive.entries().await.unwrap().array();
+        let entries = archive.entries(None).await.unwrap().array();
         assert_eq!(entries.len(), 0);
     }
 
@@ -185,7 +195,7 @@ mod tests {
         ];
         let archive = Archive::create(entries);
         assert!(!archive.is_encrypted());
-        let mut entries = archive.entries().await.unwrap().array();
+        let mut entries = archive.entries(None).await.unwrap().array();
         let entry = entries.pop().unwrap();
         assert_eq!(entry.to_vec(None).unwrap().as_slice(), b"");
         let entry = entries.pop().unwrap();
@@ -201,7 +211,7 @@ mod tests {
             ];
         let archive = Archive::create(entries);
         assert!(archive.is_encrypted());
-        let mut entries = archive.entries().await.unwrap().array();
+        let mut entries = archive.entries(None).await.unwrap().array();
         let entry = entries.pop().unwrap();
         assert!(entry.is_encrypted());
         assert_eq!(
@@ -216,7 +226,7 @@ mod tests {
             vec![Entry::from("cam.txt", b"camellia", Some("pw"), Some("camellia")).unwrap()];
         let archive = Archive::create(entries);
         assert!(archive.is_encrypted());
-        let entry = &archive.entries().await.unwrap().array()[0];
+        let entry = &archive.entries(None).await.unwrap().array()[0];
         assert_eq!(
             entry.to_vec(Some("pw".to_string())).unwrap().as_slice(),
             b"camellia"
@@ -228,7 +238,7 @@ mod tests {
         let entries =
             vec![Entry::from("secret.txt", b"data", Some("correct"), Some("aes")).unwrap()];
         let archive = Archive::create(entries);
-        let entry = &archive.entries().await.unwrap().array()[0];
+        let entry = &archive.entries(None).await.unwrap().array()[0];
         assert!(entry.to_vec(Some("wrong".to_string())).is_err());
     }
 
