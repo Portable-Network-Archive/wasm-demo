@@ -17,7 +17,7 @@ worker.addEventListener(
     const [archive, password] = e.data;
     try {
       const pna = await getPna();
-      let entries = await pna.Archive.extract_to_entries(archive);
+      let entries = await pna.Archive.extract_to_entries(archive, password);
       await Promise.allSettled(
         entries.array().map(async (entry, idx) => {
           try {
