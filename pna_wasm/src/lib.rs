@@ -8,6 +8,42 @@ fn to_js_error(e: io::Error) -> JsValue {
     JsValue::from_str(&e.to_string())
 }
 
+fn build_write_options(
+    password: Option<&str>,
+    encryption: Option<&str>,
+) -> io::Result<libpna::WriteOptions> {
+    let mut options = libpna::WriteOptions::builder();
+    options.compression(libpna::Compression::ZStandard);
+    match (password, encryption) {
+        (Some(pw), Some(enc)) => {
+            let algo = match enc {
+                "aes" => libpna::Encryption::Aes,
+                "camellia" => libpna::Encryption::Camellia,
+                other => {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidInput,
+                        format!(
+                            "Unsupported encryption algorithm: '{other}'. Use 'aes' or 'camellia'."
+                        ),
+                    ));
+                }
+            };
+            options
+                .encryption(algo)
+                .cipher_mode(libpna::CipherMode::CTR)
+                .password(Some(pw));
+        }
+        (None, None) => {}
+        _ => {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Password and encryption algorithm must both be provided or both be omitted.",
+            ));
+        }
+    }
+    Ok(options.build())
+}
+
 #[wasm_bindgen]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Entry(libpna::NormalEntry);
@@ -20,37 +56,9 @@ impl Entry {
         password: Option<&str>,
         encryption: Option<&str>,
     ) -> io::Result<Self> {
-        let mut options = libpna::WriteOptions::builder();
-        options.compression(libpna::Compression::ZStandard);
-        match (password, encryption) {
-            (Some(pw), Some(enc)) => {
-                let algo = match enc {
-                    "aes" => libpna::Encryption::Aes,
-                    "camellia" => libpna::Encryption::Camellia,
-                    other => {
-                        return Err(io::Error::new(
-                            io::ErrorKind::InvalidInput,
-                            format!(
-                                "Unsupported encryption algorithm: '{other}'. Use 'aes' or 'camellia'."
-                            ),
-                        ));
-                    }
-                };
-                options
-                    .encryption(algo)
-                    .cipher_mode(libpna::CipherMode::CTR)
-                    .password(Some(pw));
-            }
-            (None, None) => {}
-            _ => {
-                return Err(io::Error::new(
-                    io::ErrorKind::InvalidInput,
-                    "Password and encryption algorithm must both be provided or both be omitted.",
-                ));
-            }
-        }
+        let options = build_write_options(password, encryption)?;
         let mut entry =
-            libpna::EntryBuilder::new_file(libpna::EntryName::from_lossy(name), options.build())?;
+            libpna::EntryBuilder::new_file(libpna::EntryName::from_lossy(name), options)?;
         entry.write_all(data)?;
         Ok(Self(entry.build()?))
     }
@@ -127,6 +135,30 @@ impl Archive {
             archive.add_entry(pna_entry.0).unwrap();
         }
         Self(archive.finalize().unwrap())
+    }
+
+    pub fn create_solid(
+        entries: Vec<Entry>,
+        password: Option<String>,
+        encryption: Option<String>,
+    ) -> Result<Self, JsValue> {
+        utils::set_panic_hook();
+        Self::_create_solid(entries, password.as_deref(), encryption.as_deref())
+            .map_err(to_js_error)
+    }
+
+    fn _create_solid(
+        entries: Vec<Entry>,
+        password: Option<&str>,
+        encryption: Option<&str>,
+    ) -> io::Result<Self> {
+        let options = build_write_options(password, encryption)?;
+        let vec = Vec::new();
+        let mut archive = libpna::Archive::write_solid_header(vec, options)?;
+        for pna_entry in entries {
+            archive.add_entry(pna_entry.0)?;
+        }
+        Ok(Self(archive.finalize()?))
     }
 
     pub async fn from(f: web_sys::Blob) -> Self {
@@ -252,5 +284,46 @@ mod tests {
     async fn pna_encrypted_mismatched_args() {
         assert!(Entry::from("f.txt", b"data", Some("pw"), None).is_err());
         assert!(Entry::from("f.txt", b"data", None, Some("aes")).is_err());
+    }
+
+    #[wasm_bindgen_test]
+    async fn pna_solid() {
+        let entries = vec![
+            Entry::from("a.txt", b"hello", None, None).unwrap(),
+            Entry::from("b.txt", b"world", None, None).unwrap(),
+        ];
+        let archive = Archive::create_solid(entries, None, None).unwrap();
+        assert!(!archive.is_encrypted());
+        let mut entries = archive.entries(None).await.unwrap().array();
+        let entry = entries.pop().unwrap();
+        assert_eq!(entry.to_vec(None).unwrap().as_slice(), b"world");
+        let entry = entries.pop().unwrap();
+        assert_eq!(entry.to_vec(None).unwrap().as_slice(), b"hello");
+    }
+
+    #[wasm_bindgen_test]
+    async fn pna_solid_encrypted() {
+        let password = "solid_pw";
+        let entries = vec![
+            Entry::from("a.txt", b"first", None, None).unwrap(),
+            Entry::from("b.txt", b"second", None, None).unwrap(),
+        ];
+        let archive =
+            Archive::create_solid(entries, Some(password.to_string()), Some("aes".to_string()))
+                .unwrap();
+        assert!(archive.is_encrypted());
+        // Without the password, iteration should fail.
+        assert!(archive.entries(None).await.is_err());
+        // With the right password, the solid block is decrypted and flattened.
+        let mut entries = archive
+            .entries(Some(password.to_string()))
+            .await
+            .unwrap()
+            .array();
+        assert_eq!(entries.len(), 2);
+        let entry = entries.pop().unwrap();
+        assert_eq!(entry.to_vec(None).unwrap().as_slice(), b"second");
+        let entry = entries.pop().unwrap();
+        assert_eq!(entry.to_vec(None).unwrap().as_slice(), b"first");
     }
 }
