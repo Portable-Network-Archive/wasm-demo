@@ -40,6 +40,7 @@ function Create(pna: typeof import("pna")) {
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [useSolid, setUseSolid] = useState(false);
   const [useEncryption, setUseEncryption] = useState(false);
   const [password, setPassword] = useState("");
   const [algorithm, setAlgorithm] = useState<Algorithm>("aes");
@@ -138,6 +139,14 @@ function Create(pna: typeof import("pna")) {
         <label className={styles["encryption-toggle"]}>
           <input
             type="checkbox"
+            checked={useSolid}
+            onChange={(e) => setUseSolid(e.target.checked)}
+          />
+          Solid mode (compress all files together)
+        </label>
+        <label className={styles["encryption-toggle"]}>
+          <input
+            type="checkbox"
             checked={useEncryption}
             onChange={(e) => {
               setUseEncryption(e.target.checked);
@@ -183,12 +192,18 @@ function Create(pna: typeof import("pna")) {
             const trimmedPassword = password.trim();
             const objects = await Promise.all(
               files.map(async (f) =>
-                useEncryption
+                useEncryption && !useSolid
                   ? pna.Entry.new_encrypted(f, trimmedPassword, algorithm)
                   : pna.Entry.new(f),
               ),
             );
-            const a = pna.Archive.create(objects);
+            const a = useSolid
+              ? pna.Archive.create_solid(
+                  objects,
+                  useEncryption ? trimmedPassword : undefined,
+                  useEncryption ? algorithm : undefined,
+                )
+              : pna.Archive.create(objects);
             const result = a.to_u8array();
             const duration = performance.now() - startTime;
             const originalSize = files.reduce((sum, f) => sum + f.size, 0);

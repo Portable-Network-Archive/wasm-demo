@@ -175,3 +175,94 @@ test.describe("Create and Extract round-trip", () => {
     expect(extractedContent).toBe(TEST_CONTENT);
   });
 });
+
+test.describe("Solid mode round-trip", () => {
+  const FIXTURE_DIR = path.join(__dirname, "fixtures", "extract");
+  const FILE_A = path.join(FIXTURE_DIR, "solid-a.txt");
+  const FILE_B = path.join(FIXTURE_DIR, "solid-b.txt");
+  const CONTENT_A = "solid file A content";
+  const CONTENT_B = "solid file B content";
+
+  test.beforeEach(() => {
+    fs.mkdirSync(FIXTURE_DIR, { recursive: true });
+    fs.writeFileSync(FILE_A, CONTENT_A);
+    fs.writeFileSync(FILE_B, CONTENT_B);
+  });
+
+  test("plain solid archive round-trips both files", async ({ page }) => {
+    await page.goto("/create/");
+    await expect(page.locator("h1")).toBeVisible();
+
+    await page.locator('input[type="file"]').setInputFiles([FILE_A, FILE_B]);
+    await page.getByLabel("Solid mode (compress all files together)").check();
+    await page.getByRole("button", { name: "Create" }).click();
+
+    const downloadLink = page.locator("a[download='archive.pna']");
+    await expect(downloadLink).toBeVisible({ timeout: 15_000 });
+    const href = await downloadLink.getAttribute("href");
+    const archiveBuffer = await fetchBlobAsBytes(page, href!);
+    const archivePath = path.join(FIXTURE_DIR, "solid.pna");
+    fs.writeFileSync(archivePath, Buffer.from(archiveBuffer));
+
+    await page.goto("/extract/");
+    await page.locator('input[type="file"]').setInputFiles(archivePath);
+    await page.getByRole("button", { name: "Extract" }).click();
+
+    const linkA = page.locator("a[download='solid-a.txt']");
+    const linkB = page.locator("a[download='solid-b.txt']");
+    await expect(linkA).toBeVisible({ timeout: 15_000 });
+    await expect(linkB).toBeVisible();
+
+    expect(
+      await fetchBlobAsText(page, (await linkA.getAttribute("href"))!),
+    ).toBe(CONTENT_A);
+    expect(
+      await fetchBlobAsText(page, (await linkB.getAttribute("href"))!),
+    ).toBe(CONTENT_B);
+  });
+
+  test("encrypted solid archive prompts for password and decrypts", async ({
+    page,
+  }) => {
+    const password = "solid_e2e_password";
+
+    await page.goto("/create/");
+    await expect(page.locator("h1")).toBeVisible();
+
+    await page.locator('input[type="file"]').setInputFiles([FILE_A, FILE_B]);
+    await page.getByLabel("Solid mode (compress all files together)").check();
+    await page.getByLabel("Encrypt archive").check();
+    await page.locator('input[type="password"]').fill(password);
+    await page.getByRole("button", { name: "Create" }).click();
+
+    const downloadLink = page.locator("a[download='archive.pna']");
+    await expect(downloadLink).toBeVisible({ timeout: 15_000 });
+    const href = await downloadLink.getAttribute("href");
+    const archiveBuffer = await fetchBlobAsBytes(page, href!);
+    const archivePath = path.join(FIXTURE_DIR, "solid-encrypted.pna");
+    fs.writeFileSync(archivePath, Buffer.from(archiveBuffer));
+
+    await page.goto("/extract/");
+    await page.locator('input[type="file"]').setInputFiles(archivePath);
+    await page.getByRole("button", { name: "Extract" }).click();
+
+    // Password prompt must appear because the solid block is encrypted.
+    await expect(page.locator("#archive-password")).toBeVisible({
+      timeout: 10_000,
+    });
+    await page.locator("#archive-password").fill(password);
+    await page.getByRole("button", { name: "Decrypt & Extract" }).click();
+
+    const linkA = page.locator("a[download='solid-a.txt']");
+    const linkB = page.locator("a[download='solid-b.txt']");
+    await expect(linkA).toBeVisible({ timeout: 15_000 });
+    await expect(linkB).toBeVisible();
+
+    expect(
+      await fetchBlobAsText(page, (await linkA.getAttribute("href"))!),
+    ).toBe(CONTENT_A);
+    expect(
+      await fetchBlobAsText(page, (await linkB.getAttribute("href"))!),
+    ).toBe(CONTENT_B);
+  });
+});
