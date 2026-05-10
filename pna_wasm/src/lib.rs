@@ -139,8 +139,12 @@ impl Archive {
     fn _entries(&self) -> io::Result<Vec<Entry>> {
         let mut archive = libpna::Archive::read_header(self.0.as_slice())?;
         let entries = archive
-            .entries_skip_solid()
-            .map(|it| it.map(Entry))
+            .entries()
+            .filter_map(|result| match result {
+                Ok(libpna::ReadEntry::Normal(entry)) => Some(Ok(Entry(entry))),
+                Ok(libpna::ReadEntry::Solid(_)) => None,
+                Err(e) => Some(Err(e)),
+            })
             .collect::<io::Result<Vec<_>>>()?;
         Ok(entries)
     }
