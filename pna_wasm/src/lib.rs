@@ -13,12 +13,12 @@ fn build_write_options(
     encryption: Option<&str>,
 ) -> io::Result<libpna::WriteOptions> {
     let mut options = libpna::WriteOptions::builder();
-    options.compression(libpna::Compression::ZStandard);
+    options.compression(libpna::Compression::ZSTANDARD);
     match (password, encryption) {
         (Some(pw), Some(enc)) => {
             let algo = match enc {
-                "aes" => libpna::Encryption::Aes,
-                "camellia" => libpna::Encryption::Camellia,
+                "aes" => libpna::Encryption::AES,
+                "camellia" => libpna::Encryption::CAMELLIA,
                 other => {
                     return Err(io::Error::new(
                         io::ErrorKind::InvalidInput,
@@ -57,8 +57,10 @@ impl Entry {
         encryption: Option<&str>,
     ) -> io::Result<Self> {
         let options = build_write_options(password, encryption)?;
-        let mut entry =
-            libpna::EntryBuilder::new_file(libpna::EntryName::from_lossy(name), options)?;
+        let mut entry = libpna::FileEntryBuilder::new_with_options(
+            libpna::EntryName::from_lossy(name),
+            options,
+        )?;
         entry.write_all(data)?;
         Ok(Self(entry.build()?))
     }
@@ -91,7 +93,7 @@ impl Entry {
     }
 
     pub fn is_encrypted(&self) -> bool {
-        self.0.header().encryption() != libpna::Encryption::No
+        self.0.header().encryption() != libpna::Encryption::NO
     }
 
     fn to_vec(&self, password: Option<String>) -> io::Result<Vec<u8>> {
@@ -189,8 +191,8 @@ impl Archive {
             return false;
         };
         archive.entries().any(|r| match r {
-            Ok(libpna::ReadEntry::Normal(n)) => n.header().encryption() != libpna::Encryption::No,
-            Ok(libpna::ReadEntry::Solid(s)) => s.encryption() != libpna::Encryption::No,
+            Ok(libpna::ReadEntry::Normal(n)) => n.header().encryption() != libpna::Encryption::NO,
+            Ok(libpna::ReadEntry::Solid(s)) => s.encryption() != libpna::Encryption::NO,
             Err(_) => false,
         })
     }
