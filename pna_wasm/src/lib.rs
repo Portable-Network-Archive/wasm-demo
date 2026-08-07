@@ -170,8 +170,9 @@ impl Archive {
 
     fn _entries(&self, password: Option<&[u8]>) -> io::Result<Vec<Entry>> {
         let mut archive = libpna::Archive::read_header(self.0.as_slice())?;
+        let options = libpna::ReadOptions::with_password(password);
         let entries = archive
-            .entries_with_password(password)
+            .entries_with_options(&options)
             .map(|r| r.map(Entry))
             .collect::<io::Result<Vec<_>>>()?;
         Ok(entries)
