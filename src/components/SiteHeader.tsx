@@ -2,12 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import styles from "./SiteHeader.module.css";
 
+const basePath = process.env.BASE_PATH ?? "";
+
 const SiteHeader: React.FC = () => {
   return (
     <header className={styles["header"]}>
       <Link href="/" className={styles["brand"]}>
         <Image
-          src="/favicon.svg"
+          src={`${basePath}/favicon.svg`}
           alt=""
           width={36}
           height={36}
