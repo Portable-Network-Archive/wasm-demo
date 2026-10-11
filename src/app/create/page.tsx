@@ -7,22 +7,19 @@ import dynamic from "next/dynamic";
 import Card from "@/components/Card";
 import bytes from "bytes";
 import { formatError } from "@/lib/formatError";
+import type {
+  CreateWorkerRequest,
+  CreateWorkerResponse,
+} from "@/lib/createWorker";
 
-export default dynamic(
-  async () => {
-    const init = await import("pna");
-    await init.default();
-    return () => Create(init);
-  },
-  {
-    ssr: false,
-    loading: () => (
-      <main className={styles["main"]}>
-        <p style={{ textAlign: "center" }}>Loading WebAssembly module...</p>
-      </main>
-    ),
-  },
-);
+export default dynamic(async () => Create, {
+  ssr: false,
+  loading: () => (
+    <main className={styles["main"]}>
+      <p style={{ textAlign: "center" }}>Loading WebAssembly module...</p>
+    </main>
+  ),
+});
 
 function formatRatio(original: number, compressed: number): string {
   if (original <= 0) return "";
@@ -34,8 +31,11 @@ function formatRatio(original: number, compressed: number): string {
 
 type Algorithm = "aes" | "camellia";
 
-function Create(pna: typeof import("pna")) {
+function Create() {
   const inputRef = useRef<HTMLInputElement>(null);
+  const workerRef = useRef<Worker | null>(null);
+  const startTimeRef = useRef<number>(0);
+  const originalSizeRef = useRef<number>(0);
   const [archive, setArchive] = useState<Uint8Array | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +49,11 @@ function Create(pna: typeof import("pna")) {
     archiveSize: number;
     duration: number;
   } | null>(null);
+  const [progress, setProgress] = useState<{
+    done: number;
+    total: number;
+  } | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const archiveUrl = useMemo(() => {
     if (!archive) return null;
@@ -64,6 +69,59 @@ function Create(pna: typeof import("pna")) {
       if (archiveUrl) URL.revokeObjectURL(archiveUrl);
     };
   }, [archiveUrl]);
+
+  useEffect(() => {
+    const worker = new Worker(
+      new URL("@/lib/createWorker.ts", import.meta.url),
+    );
+    worker.addEventListener(
+      "message",
+      (e: MessageEvent<CreateWorkerResponse>) => {
+        const data = e.data;
+        if (data[0] === "progress") {
+          setProgress({ done: data[1], total: data[2] });
+          if (data[1] >= data[2]) setIsCompressing(true);
+          return;
+        }
+        if (data[0] === "error") {
+          setError(data[1]);
+          setIsProcessing(false);
+          setProgress(null);
+          setIsCompressing(false);
+          return;
+        }
+        const result = new Uint8Array(data[1]);
+        const duration = performance.now() - startTimeRef.current;
+        setArchive(result);
+        setStats({
+          originalSize: originalSizeRef.current,
+          archiveSize: result.length,
+          duration,
+        });
+        setProgress(null);
+        setIsCompressing(false);
+        setIsProcessing(false);
+      },
+    );
+    worker.addEventListener("error", (event) => {
+      setIsProcessing(false);
+      workerRef.current = null;
+      setProgress(null);
+      setIsCompressing(false);
+      setError(
+        `Worker error: ${event.message ?? "An unknown error occurred in the creation worker."}`,
+      );
+    });
+    worker.addEventListener("messageerror", () => {
+      setIsProcessing(false);
+      workerRef.current = null;
+      setProgress(null);
+      setIsCompressing(false);
+      setError("Failed to deserialize message from creation worker.");
+    });
+    workerRef.current = worker;
+    return () => worker.terminate();
+  }, []);
 
   function preventDefaults<E, C, T>(event: React.BaseSyntheticEvent<E, C, T>) {
     event.preventDefault();
@@ -182,44 +240,71 @@ function Create(pna: typeof import("pna")) {
           isProcessing ||
           (useEncryption && !password.trim())
         }
-        onClick={async () => {
+        onClick={() => {
+          if (isProcessing) return;
+          const w = workerRef.current;
+          if (!w) {
+            setError(
+              "Creation worker is not available. Please reload the page.",
+            );
+            return;
+          }
           setIsProcessing(true);
           setError(null);
           setArchive(null);
           setStats(null);
-          const startTime = performance.now();
+          setProgress({ done: 0, total: files.length });
+          setIsCompressing(false);
+          startTimeRef.current = performance.now();
+          originalSizeRef.current = files.reduce((sum, f) => sum + f.size, 0);
+          const trimmedPassword = password.trim();
+          const request: CreateWorkerRequest = [
+            files,
+            useEncryption
+              ? { solid: useSolid, password: trimmedPassword, algorithm }
+              : { solid: useSolid },
+          ];
           try {
-            const trimmedPassword = password.trim();
-            const objects = await Promise.all(
-              files.map(async (f) =>
-                useEncryption && !useSolid
-                  ? pna.Entry.new_encrypted(f, trimmedPassword, algorithm)
-                  : pna.Entry.new(f),
-              ),
-            );
-            const a = useSolid
-              ? pna.Archive.create_solid(
-                  objects,
-                  useEncryption ? trimmedPassword : undefined,
-                  useEncryption ? algorithm : undefined,
-                )
-              : pna.Archive.create(objects);
-            const result = a.to_u8array();
-            const duration = performance.now() - startTime;
-            const originalSize = files.reduce((sum, f) => sum + f.size, 0);
-            setArchive(result);
-            setStats({
-              originalSize,
-              archiveSize: result.length,
-              duration,
-            });
+            w.postMessage(request);
           } catch (e) {
             setError(formatError(e));
-          } finally {
             setIsProcessing(false);
+            setProgress(null);
           }
         }}
       />
+      {isProcessing && (
+        <div className={styles["progress"]}>
+          {isCompressing ? (
+            <p role="progressbar" aria-label="Compressing archive">
+              Compressing archive...
+            </p>
+          ) : (
+            progress && (
+              <>
+                <div
+                  role="progressbar"
+                  aria-label="Creating archive"
+                  aria-valuemin={0}
+                  aria-valuemax={progress.total}
+                  aria-valuenow={progress.done}
+                  className={styles["progress-bar"]}
+                >
+                  <div
+                    className={styles["progress-fill"]}
+                    style={{
+                      width: `${progress.total === 0 ? 0 : Math.round((progress.done / progress.total) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <p>
+                  Processing {progress.done} of {progress.total} files...
+                </p>
+              </>
+            )
+          )}
+        </div>
+      )}
       {error && (
         <p className={styles["error"]} role="alert">
           {error}
