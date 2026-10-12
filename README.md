@@ -56,7 +56,7 @@ Your feedback and contributions are welcome!
 
 ## License
 
-The WASM binding in `pna_wasm/` is MIT (see `pna_wasm/LICENSE_MIT`).
+This project is dual-licensed under the MIT License and the Apache License 2.0 (see `LICENSE_MIT` and `LICENSE_APACHE`).
 
 ## Related links
 
