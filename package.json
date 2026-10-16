@@ -27,7 +27,7 @@
     "react-dom": "^19"
   },
   "devDependencies": {
-    "@playwright/test": "^1.63.0",
+    "@playwright/test": "^1.64.0",
     "@types/bytes": "^3.1.6",
     "@types/node": "^24",
     "@types/react": "^19",
