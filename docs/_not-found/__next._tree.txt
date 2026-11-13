@@ -1,4 +1,4 @@
 :HL["/wasm-demo/_next/static/chunks/04ogq4cx3o3-u.css","style"]
 2:[["children",{"s":"__PAGE__","h":160}]]
 1:[["children",{"s":"/_not-found","h":96,"c":"$Q2"}]]
-0:{"b":"Avm4YsXH9_5QYCF9ygXMG","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
+0:{"b":"3FdzxFJv-qtgrpLnXqCDr","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
